@@ -39,96 +39,94 @@ import lombok.RequiredArgsConstructor;
 @RestController
 public class ProjectController {
 
-        private final ProjectService projectService;
-        private final ProjectTranslatorService translatorService;
+    private final ProjectService projectService;
+    private final ProjectTranslatorService translatorService;
 
-        @Operation(summary = "Get project by id")
-        @GetMapping("/id/{id}")
-        public BaseResponse<?> getProject(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @PathVariable Long id) {
-                return BaseResponse.success("Project",
-                                projectService.getProjectById(userDetails == null ? null : userDetails.getUser(), id));
-        }
+    @Operation(summary = "Get project by id")
+    @GetMapping("/id/{id}")
+    public BaseResponse<?> getProject(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long id) {
+        return BaseResponse.success("Project",
+                projectService.getProjectById(userDetails == null ? null : userDetails.getUser(), id));
+    }
 
-        @Operation(summary = "Get projects by channel")
-        @GetMapping("/channel")
-        public BaseResponse<?> getProjectsByChannel(
-                        @RequestParam String url) {
-                return BaseResponse.success("Channel's projects", projectService.getProjectsByChannel(url));
-        }
+    @Operation(summary = "Get projects by channel")
+    @GetMapping("/channel")
+    public BaseResponse<?> getProjectsByChannel(
+            @RequestParam String url) {
+        return BaseResponse.success("Channel's projects", projectService.getProjectsByChannel(url));
+    }
 
-        @Operation(summary = "Create project")
-        @PostMapping
-        public BaseResponse<Project> createProject(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody @Valid CreateProjectDto requestDto) {
-                return BaseResponse.success("Project created",
-                                projectService.createProject(userDetails.getUser(), requestDto));
-        }
+    @Operation(summary = "Create project")
+    @PostMapping
+    public BaseResponse<Project> createProject(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody @Valid CreateProjectDto requestDto) {
+        return BaseResponse.success("Project created",
+                projectService.createProject(userDetails.getUser(), requestDto));
+    }
 
-        @Operation(summary = "Update view count")
-        @PutMapping("/viewCount")
-        public BaseResponse<?> updateViewCount(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestParam Long projectId) {
-                return BaseResponse.success("Project updated",
-                                projectService.updateViewCount(userDetails.getUser(), projectId));
+    @Operation(summary = "Update view count")
+    @PutMapping("/viewCount")
+    public BaseResponse<?> updateViewCount(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam Long projectId) {
+        return BaseResponse.success("Project updated",
+                projectService.updateViewCount(userDetails.getUser(), projectId));
+    }
 
-        }
+    @Operation(summary = "Update project")
+    @PutMapping
+    public BaseResponse<Project> updateProject(@AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody @Valid UpdateProjectDto requestDto) {
+        return BaseResponse.success("Project updated",
+                projectService.updateProject(userDetails.getUser(), requestDto));
+    }
 
-        @Operation(summary = "Update project")
-        @PutMapping
-        public BaseResponse<Project> updateProject(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestParam Long projectId,
-                        @RequestBody @Valid UpdateProjectDto requestDto) {
-                return BaseResponse.success("Project updated",
-                                projectService.updateProject(userDetails.getUser(), projectId, requestDto));
-        }
+    @Operation(summary = "Hard delete projects")
+    @DeleteMapping
+    public BaseResponse<?> hardDeleteProject(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody List<Long> ids) {
+        return BaseResponse.success("Projects deleted",
+                projectService.hardDeleteProjects(userDetails.getUser(), ids));
+    }
 
-        @Operation(summary = "Hard delete project")
-        @DeleteMapping()
-        public BaseResponse<?> hardDeleteProject(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody List<Long> ids) {
-                return BaseResponse.success("Projects permanently deleted",
-                                projectService.hardDeleteProjects(userDetails.getUser(), ids));
-        }
+    @Operation(summary = "Add translators")
+    @PostMapping("/translators")
+    public BaseResponse<List<ProjectTranslator>> addTranslators(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody AddTranslatorsDto requestDto) {
+        return BaseResponse.success("Translators added",
+                translatorService.adminAddTranslators(userDetails.getUser(), requestDto));
+    }
 
-        @Operation(summary = "Add translators")
-        @PostMapping("/translators")
-        public BaseResponse<List<ProjectTranslator>> addTranslators(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody AddTranslatorsDto requestDto) {
-                return BaseResponse.success("Translators added",
-                                translatorService.adminAddTranslators(userDetails.getUser(), requestDto));
-        }
+    @Operation(summary = "Accept translator")
+    @PutMapping("/translator")
+    public BaseResponse<?> acceptTranslator(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody AcceptTranslatorDto requestDto) {
+        return BaseResponse.success("Translator accepted",
+                translatorService.adminAcceptTranslatorRequest(userDetails.getUser(),
+                        requestDto.getRequestId()));
+    }
 
-        @Operation(summary = "Accept translator")
-        @PutMapping("/translator")
-        public BaseResponse<?> acceptTranslator(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody AcceptTranslatorDto requestDto) {
-                return BaseResponse.success("Translator accepted",
-                                translatorService.adminAcceptTranslatorRequest(userDetails.getUser(),
-                                                requestDto.getRequestId()));
-        }
+    @Operation(summary = "Search channels")
+    @GetMapping("/channel/search")
+    public BaseResponse<List<IChannel>> searchChannels(
+            @RequestParam String name) {
+        return BaseResponse.success("Search channels", projectService.searchChannels(name));
+    }
 
-        @Operation(summary = "Search channels")
-        @GetMapping("/channel/search")
-        public BaseResponse<List<IChannel>> searchChannels(
-                        @RequestParam String name) {
-                return BaseResponse.success("Search channels", projectService.searchChannels(name));
-        }
-
-        @Operation(summary = "Search projects")
-        @GetMapping("/search")
-        public BaseResponse<?> searchProjects(
-                        @RequestParam(defaultValue = "") String keywords,
-                        @RequestParam(defaultValue = "all") String desLangCode,
-                        @RequestParam(defaultValue = "relevance") ProjectSortBy sortBy,
-                        @RequestParam(defaultValue = "0") int pageNumber) {
-                Page<?> page = projectService.searchProjects(keywords, desLangCode, sortBy, pageNumber);
-                return BaseResponse.success("Search projects", new PageDto<>(page));
-        }
+    @Operation(summary = "Search projects")
+    @GetMapping("/search")
+    public BaseResponse<?> searchProjects(
+            @RequestParam(defaultValue = "") String keywords,
+            @RequestParam(defaultValue = "all") String langCode,
+            @RequestParam(defaultValue = "relevance") ProjectSortBy sortBy,
+            @RequestParam(defaultValue = "0") int pageNumber) {
+        Page<?> page = projectService.searchProjects(keywords, langCode, sortBy, pageNumber);
+        return BaseResponse.success("Search projects", new PageDto<>(page));
+    }
 }

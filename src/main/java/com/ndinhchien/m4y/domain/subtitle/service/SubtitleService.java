@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ndinhchien.m4y.domain.project.entity.Project;
+import com.ndinhchien.m4y.domain.project.entity.Video;
 import com.ndinhchien.m4y.domain.project.repository.ProjectRepository;
 import com.ndinhchien.m4y.domain.project.service.ProjectTranslatorService;
+import com.ndinhchien.m4y.domain.project.service.VideoService;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.AddSubtitleDto;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.UpdateDesTextDto;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.UpdateSubtitleDto;
@@ -28,57 +30,58 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class SubtitleService {
 
+    private final VideoService videoService;
     private final ProjectRepository projectRepository;
     private final ProjectTranslatorService translatorService;
     private final SubtitleRepository subtitleRepository;
 
     @Transactional(readOnly = true)
-    public List<ISubtitle> getSubtitles(String projectSrcUrl) {
-        return subtitleRepository.findAllByProjectSrcUrl(projectSrcUrl);
+    public List<ISubtitle> getSubtitles(String videoUrl) {
+        return subtitleRepository.findAllByVideoUrl(videoUrl);
     }
 
     @Transactional
-    public List<Subtitle> initSubtitles(User user, String projectSrcUrl, List<AddSubtitleDto> requestDto) {
-        Project project = projectRepository.findBySrcUrlAndAdmin(projectSrcUrl, user)
-                .orElseThrow(() -> {
-                    throw new BusinessException(HttpStatus.FORBIDDEN,
-                            "You have to create a project with this video first.");
-                });
-
-        if (subtitleRepository.countByProjectSrcUrl(projectSrcUrl) > 0l) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "This video already has initial subtitles");
+    public List<Subtitle> creatorAddSubtitles(User user, String videoUrl, List<AddSubtitleDto> requestDto) {
+        Video video = videoService.validateVideo(videoUrl);
+        if (!video.isCreator(user)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "You are not the creator of this project's subtitles.");
         }
 
+        if (!projectRepository.existsByVideoUrlAndAdmin(videoUrl, user)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN,
+                    "You have to create a project with this video first.");
+        }
         List<Subtitle> subtitles = requestDto.stream().map((dto) -> {
-            return new Subtitle(user, project.getSrcUrl(), project.getSrcLangCode(), dto.getStart(),
+            return new Subtitle(user, video, dto.getStart(),
                     dto.getEnd(), dto.getSrcText());
         }).toList();
+
+        if (subtitles.size() > 0 && !video.hasCreator()) {
+            video.setCreator(user);
+            videoService.save(video);
+        }
 
         return subtitleRepository.saveAll(subtitles);
     }
 
     @Transactional
-    public List<Subtitle> creatorUpdateSubtitles(User user, String projectSrcUrl, List<UpdateSubtitleDto> requestDto) {
-        Project project = projectRepository.findBySrcUrlAndAdmin(projectSrcUrl, user)
-                .orElseThrow(() -> {
-                    throw new BusinessException(HttpStatus.FORBIDDEN, ErrorMessage.NOT_PROJECT_ADMIN);
-                });
-
-        String srcLangCode = project.getSrcLangCode();
+    public List<Subtitle> creatorUpdateSubtitles(User user, String videoUrl, List<UpdateSubtitleDto> requestDto) {
+        Video video = videoService.validateVideo(videoUrl);
+        if (!video.isCreator(user)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "You are not the creator of this project's subtitles.");
+        }
 
         List<Subtitle> updated = new ArrayList<>();
         for (UpdateSubtitleDto dto : requestDto) {
             Long subtitleId = dto.getId();
 
             Subtitle subtitle = subtitleRepository.findById(subtitleId).orElse(null);
-            if (subtitle == null || !subtitle.getProjectSrcUrl().equals(projectSrcUrl)) {
+            if (subtitle == null || !subtitle.getVideoUrl().equals(videoUrl)) {
                 continue;
             }
 
-            if (subtitle.isCreator(user)) {
-                subtitle.creatorUpdate(user, dto, srcLangCode);
-                updated.add(subtitle);
-            }
+            subtitle.update(user, dto);
+            updated.add(subtitle);
         }
         return subtitleRepository.saveAll(updated);
     }
@@ -88,7 +91,7 @@ public class SubtitleService {
         List<Subtitle> deleted = new ArrayList<>();
         List<Subtitle> subtitles = subtitleRepository.findAllById(ids);
         for (Subtitle subtitle : subtitles) {
-            if (subtitle.creatorCanDelete(user)) {
+            if (!subtitle.hasOtherAdminDesTexts(user)) {
                 deleted.add(subtitle);
             }
         }
@@ -97,9 +100,9 @@ public class SubtitleService {
     }
 
     @Transactional
-    public List<Subtitle> updateDesTexts(User user, String projectSrcUrl, String projectDesLangCode,
+    public List<Subtitle> updateDesTexts(User user, String videoUrl, String langCode,
             List<UpdateDesTextDto> requestDto) {
-        Project project = projectRepository.findBySrcUrlAndDesLangCode(projectSrcUrl, projectDesLangCode)
+        Project project = projectRepository.findByVideoUrlAndLangCode(videoUrl, langCode)
                 .orElseThrow(() -> {
                     throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.PROJECT_NOT_FOUND);
                 });
@@ -113,11 +116,11 @@ public class SubtitleService {
             Long subtitleId = dto.getId();
 
             Subtitle subtitle = subtitleRepository.findById(subtitleId).orElse(null);
-            if (subtitle == null || !subtitle.getProjectSrcUrl().equals(projectSrcUrl)) {
+            if (subtitle == null || !subtitle.getVideoUrl().equals(videoUrl)) {
                 continue;
             }
 
-            subtitle.updateDesText(user, dto, projectDesLangCode);
+            subtitle.update(user, dto.getDesText(), langCode);
             updated.add(subtitle);
         }
         return subtitleRepository.saveAll(updated);

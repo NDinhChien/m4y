@@ -2,15 +2,11 @@ package com.ndinhchien.m4y.domain.project.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DynamicUpdate;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,10 +39,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "projects", indexes = {
-        @Index(name = "projects_src_url_idx", columnList = "src_url"),
+        @Index(name = "projects_video_url_idx", columnList = "video_url"),
         @Index(name = "projects_admin_id_idx", columnList = "admin_id"),
         @Index(name = "projects_channel_id_idx", columnList = "channel_id"),
-        @Index(name = "projects_des_lang_code_idx", columnList = "des_lang_code"),
+        @Index(name = "projects_lang_code_idx", columnList = "lang_code"),
         @Index(name = "projects_created_at_idx", columnList = "created_at"),
         @Index(name = "projects_view_count_idx", columnList = "view_count"),
 })
@@ -55,19 +51,30 @@ public class Project implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String srcUrl;
-
-    @Column(name = "channel_id", nullable = false, insertable = false, updatable = false)
-    private Long channelId;
-
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "channel_id")
     private Channel channel;
 
+    @Column(name = "channel_id", nullable = false, insertable = false, updatable = false)
+    private Long channelId;
+
+    @Column(nullable = false)
+    private String channelUrl;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "video_id")
+    private Video video;
+
+    @Column(name = "video_id", nullable = false, insertable = false, updatable = false)
+    private Long videoId;
+
+    @Column(nullable = false)
+    private String videoUrl;
+
     @Column
-    private String title;
+    private String name;
 
     @Column(length = 1024)
     private String description;
@@ -80,10 +87,7 @@ public class Project implements Serializable {
     private Integer duration;
 
     @Column(nullable = false)
-    private String srcLangCode;
-
-    @Column(nullable = false)
-    private String desLangCode;
+    private String langCode;
 
     @Column(nullable = false)
     private Integer viewCount;
@@ -144,18 +148,21 @@ public class Project implements Serializable {
     }
 
     @Builder
-    public Project(User admin, Channel channel, String srcUrl, String title, String description, Integer duration,
-            Language srcLang, Language desLang) {
+    public Project(User admin, Channel channel, Video video, String name, String description, Language language) {
         this.admin = admin;
         this.adminId = admin.getId();
         this.channel = channel;
         this.channelId = channel.getId();
-        this.srcUrl = srcUrl;
-        this.title = title;
+        this.channelUrl = channel.getUrl();
+
+        this.video = video;
+        this.videoId = video.getId();
+        this.videoUrl = video.getUrl();
+        this.duration = video.getDuration();
+
+        this.name = name;
         this.description = description;
-        this.duration = duration;
-        this.srcLangCode = srcLang.getCode();
-        this.desLangCode = desLang.getCode();
+        this.langCode = language.getCode();
 
         this.prePersist();
     }
@@ -164,12 +171,8 @@ public class Project implements Serializable {
         return this.adminId.equals(user.getId());
     }
 
-    public void setSrcLangCode(Language srcLang) {
-        this.srcLangCode = srcLang.getCode();
-    }
-
-    public void setDesLangCode(Language desLang) {
-        this.desLangCode = desLang.getCode();
+    public void setLangCode(Language language) {
+        this.langCode = language.getCode();
     }
 
     public void updateReactCount(int count) {
@@ -181,11 +184,11 @@ public class Project implements Serializable {
     }
 
     public void update(UpdateProjectDto dto) {
-        String title = dto.getTitle();
+        String name = dto.getName();
         String description = dto.getDescription();
         Boolean isCompleted = dto.getIsCompleted();
-        if (StringUtils.hasText(title)) {
-            this.title = title;
+        if (StringUtils.hasText(name)) {
+            this.name = name;
         }
         if (StringUtils.hasText(description)) {
             this.description = description;

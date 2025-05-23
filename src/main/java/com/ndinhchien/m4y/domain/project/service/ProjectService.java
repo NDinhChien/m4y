@@ -21,6 +21,7 @@ import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IChannel;
 import com.ndinhchien.m4y.domain.project.entity.Channel;
 import com.ndinhchien.m4y.domain.project.entity.Project;
+import com.ndinhchien.m4y.domain.project.entity.Video;
 import com.ndinhchien.m4y.domain.project.entity.ViewHistory;
 import com.ndinhchien.m4y.domain.project.repository.ChannelRepository;
 import com.ndinhchien.m4y.domain.project.repository.ViewHistoryRepository;
@@ -31,17 +32,18 @@ import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class ProjectService {
 
     private final static int PAGE_SIZE = 12;
 
+    private final VideoService videoService;
     private final ProjectRepository projectRepository;
     private final ChannelRepository channelRepository;
     private final ViewHistoryRepository viewHistoryRepository;
@@ -67,49 +69,55 @@ public class ProjectService {
 
     @Transactional
     public Project createProject(User user, CreateProjectDto requestDto) {
-        String channelName = requestDto.getChannelName();
         String channelUrl = requestDto.getChannelUrl();
+        String channelName = requestDto.getChannelName();
+        String channelDescription = requestDto.getChannelDescription();
 
         Channel channel = channelRepository.findByUrl(channelUrl).orElse(null);
         if (channel == null) {
-            channel = channelRepository.save(new Channel(channelUrl, channelName));
+            channel = channelRepository.save(new Channel(channelUrl, channelName, channelDescription));
         }
 
-        String srcUrl = requestDto.getSrcUrl();
-        String title = requestDto.getTitle();
+        String videoUrl = requestDto.getVideoUrl();
+        String videoName = requestDto.getVideoName();
+        String videoDescription = requestDto.getDescription();
+        Integer videoDuration = requestDto.getVideoDuration();
+        String videoLangCode = requestDto.getVideoLangCode();
+        Language videoLanguage = null;
+        if (StringUtils.hasText(videoLangCode)) {
+            videoLanguage = languageService.validateLanguageByCode(videoLangCode);
+        }
+
+        Video video = videoService.findByUrl(videoUrl);
+        if (video == null) {
+            if (channel == null || videoLanguage == null) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST);
+            }
+            video = videoService
+                    .save(new Video(channel, videoUrl, videoName, videoDescription, videoDuration, videoLanguage));
+        }
+
+        String name = requestDto.getName();
         String description = requestDto.getDescription();
-        Integer duration = requestDto.getDuration();
-        String srcLangName = requestDto.getSrcLangName();
-        String desLangName = requestDto.getDesLangName();
+        String langCode = requestDto.getLangCode();
+        Language language = languageService.validateLanguageByCode(langCode);
 
-        Language srcLang = languageService.validateLanguage(srcLangName);
-        Language desLang = languageService.validateLanguage(desLangName);
-
-        List<Project> projects = projectRepository.findBySrcUrl(srcUrl);
-        if (projects.stream().anyMatch((p) -> !p.getSrcLangCode().equals(srcLang.getCode()))) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Source language is invalid");
-        }
-        if (projectRepository.existsBySrcUrlAndDesLangCode(srcUrl, desLang.getCode())) {
+        if (projectRepository.existsByVideoUrlAndLangCode(video.getUrl(), language.getCode())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST,
-                    String.format("This project has %s subtitles already", desLang.getName()));
+                    String.format("This project has %s subtitles already", language.getName()));
         }
 
-        Project project = new Project(user, channel, srcUrl, title, description, duration, srcLang, desLang);
+        Project project = new Project(user, channel, video, name, description, language);
         return projectRepository.save(project);
     }
 
     @Transactional
-    public Project updateProject(User user, Long projectId, UpdateProjectDto requestDto) {
-
-        String srcLangName = requestDto.getSrcLangName();
-        String desLangName = requestDto.getDesLangName();
-        Language srcLang = null;
-        if (StringUtils.hasText(srcLangName)) {
-            srcLang = languageService.validateLanguage(srcLangName);
-        }
-        Language desLang = null;
-        if (StringUtils.hasText(desLangName)) {
-            desLang = languageService.validateLanguage(desLangName);
+    public Project updateProject(User user, UpdateProjectDto requestDto) {
+        Long projectId = requestDto.getProjectId();
+        String langCode = requestDto.getLangCode();
+        Language language = null;
+        if (StringUtils.hasText(langCode)) {
+            language = languageService.validateLanguageByCode(langCode);
         }
 
         Project project = validateProject(projectId);
@@ -118,18 +126,9 @@ public class ProjectService {
         }
 
         project.update(requestDto);
-
-        String srcUrl = project.getSrcUrl();
-
-        if (srcLang != null && !project.getSrcLangCode().equals(srcLang.getCode())) {
-            if (projectRepository.countBySrcUrl(srcUrl) <= 1l) {
-                project.setSrcLangCode(srcLang);
-            }
-        }
-
-        if (desLang != null && !project.getDesLangCode().equals(desLang.getCode())) {
-            if (!projectRepository.existsBySrcUrlAndDesLangCode(srcUrl, desLang.getCode())) {
-                project.setDesLangCode(desLang);
+        if (language != null && !project.getLangCode().equals(language.getCode())) {
+            if (!projectRepository.existsByVideoUrlAndLangCode(project.getVideoUrl(), language.getCode())) {
+                project.setLangCode(language);
             }
         }
         return projectRepository.save(project);
@@ -167,22 +166,22 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Page<?> searchProjects(String keywords, String desLangCode, ProjectSortBy sortBy,
+    public Page<?> searchProjects(String keywords, String langCode, ProjectSortBy sortBy,
             int pageNumber) {
         Sort sortDetails = Sort.by(Direction.DESC, sortBy.toString());
         Pageable pageDetails = PageRequest.of(Math.max(0, pageNumber), PAGE_SIZE, sortDetails);
-        Boolean shouldIncludeDeslangCode = StringUtils.hasText(desLangCode) && !desLangCode.toUpperCase().equals("ALL")
-                && languageService.existsByCode(desLangCode);
+        Boolean shouldIncludeLangCode = StringUtils.hasText(langCode) && !langCode.toUpperCase().equals("ALL")
+                && languageService.existsByCode(langCode);
 
         if (!StringUtils.hasText(keywords)) {
-            if (shouldIncludeDeslangCode) {
-                return projectRepository.findAllByDesLangCode(desLangCode,
+            if (shouldIncludeLangCode) {
+                return projectRepository.findAllByLangCode(langCode,
                         pageDetails);
             }
             return projectRepository.findAllBy(pageDetails);
         } else {
-            if (shouldIncludeDeslangCode) {
-                return projectRepository.search(keywords, desLangCode, pageDetails);
+            if (shouldIncludeLangCode) {
+                return projectRepository.search(keywords, langCode, pageDetails);
             }
 
             return projectRepository.search(keywords, pageDetails);
@@ -200,4 +199,5 @@ public class ProjectService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.CHANNEL_NOT_FOUND);
         });
     }
+
 }

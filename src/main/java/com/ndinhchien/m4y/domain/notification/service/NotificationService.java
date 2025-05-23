@@ -35,11 +35,10 @@ public class NotificationService {
     private final LinkService linkService;
 
     @Transactional(readOnly = true)
-    public List<INotification> getNotifications(User user, Instant date) {
-        InstantRange range = new InstantRange(date);
+    public List<INotification> getNotifications(User user, Instant start, Instant end) {
         return notificationRepository.findAllByUserAndCreatedAtGreaterThanAndCreatedAtLessThan(user,
-                range.getStartOfDay(),
-                range.getEndOfDay());
+                start,
+                end);
     }
 
     @Transactional
@@ -61,8 +60,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public long hardDeleteAll(User user) {
-        return notificationRepository.deleteAllByUser(user);
+    public long hardDeleteNotificactions(User user, List<Long> ids) {
+        return notificationRepository.deleteAllByUserAndIdIn(user, ids);
     }
 
     private Notification validateNotification(Long notificationId) {
