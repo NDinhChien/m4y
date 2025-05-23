@@ -19,16 +19,18 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     static final String SEARCH_QUERY = """
             SELECT   id,
-                     src_url as srcUrl,
                      channel_id as channelId,
-                     title,
+                     channel_url as channelUrl,
+                     video_id as videoId,
+                     video_url as videoUrl,
+                     name,
                      description,
                      duration,
-                     src_lang_code as srcLangCode,
-                     des_lang_code as desLangCode,
+                     lang_code as langCode,
                      view_count as viewCount,
                      react_count as reactCount,
                      admin_id as adminId,
+                     is_completed as isCompleted,
                      created_at as createdAt,
                      updated_at as updatedAt,
                      ts_rank(full_text, to_tsquery('simple', :keywords)) AS relevance
@@ -39,29 +41,31 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query(value = SEARCH_QUERY, nativeQuery = true)
     Page<IProjectSearch> search(String keywords, Pageable pageable);
 
-    @Query(value = SEARCH_QUERY + " AND des_lang_code = :desLangCode", nativeQuery = true)
-    Page<IProjectSearch> search(String keywords, String desLangCode, Pageable pageable);
+    @Query(value = SEARCH_QUERY + " AND lang_code = :langCode", nativeQuery = true)
+    Page<IProjectSearch> search(String keywords, String langCode, Pageable pageable);
+
+    long countByVideoUrl(String videoUrl);
 
     boolean existsByIdAndAdminId(Long id, Long userId);
 
-    boolean existsBySrcUrlAndDesLangCode(String srcUrl, String desLangCode);
+    boolean existsByVideoUrlAndLangCode(String videoUrl, String langCode);
 
-    long countBySrcUrl(String srcUrl);
+    boolean existsByVideoUrlAndAdmin(String videoUrl, User admin);
 
-    Optional<Project> findBySrcUrlAndAdmin(String srcUrl, User admin);
+    Optional<Project> findByVideoUrlAndAdmin(String videoUrl, User admin);
 
-    Optional<Project> findBySrcUrlAndDesLangCode(String srcUrl, String desLangCode);
+    Optional<Project> findByVideoUrlAndLangCode(String videoUrl, String langCode);
 
     Optional<IProject> findProjectById(Long id);
 
     Optional<IBasicProject> findOneById(Long id);
 
-    List<Project> findBySrcUrl(String srcUrl);
+    List<Project> findByVideoUrl(String videoUrl);
 
     Page<IBasicProject> findAllBy(Pageable pageable);
 
     List<IBasicProject> findAllByChannel(Channel channel);
 
-    Page<IBasicProject> findAllByDesLangCode(String desLangCode, Pageable pageable);
+    Page<IBasicProject> findAllByLangCode(String langCode, Pageable pageable);
 
 }

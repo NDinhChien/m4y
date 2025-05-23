@@ -8,11 +8,13 @@ import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProjectReacti
 
 public class ProjectResponseDto {
     public static interface IChannel {
+
         Long getId();
 
         String getName();
 
         String getUrl();
+
     }
 
     public static interface IProjectTranslator {
@@ -31,25 +33,29 @@ public class ProjectResponseDto {
     public interface IBasicProject {
         Long getId();
 
-        String getSrcUrl();
-
         Long getChannelId();
 
-        String getTitle();
+        String getChannelUrl();
+
+        Long getVideoId();
+
+        String getVideoUrl();
+
+        String getName();
 
         String getDescription();
 
         Integer getDuration();
 
-        String getSrcLangCode();
-
-        String getDesLangCode();
+        String getLangCode();
 
         Integer getViewCount();
 
         Integer getReactCount();
 
         Long getAdminId();
+
+        Boolean getIsCompleted();
 
         Instant getCreatedAt();
 

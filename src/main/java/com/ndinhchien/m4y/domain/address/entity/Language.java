@@ -22,7 +22,7 @@ public class Language extends Proposable {
     @Id
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String code;
 
     public Language(User proposer, String name, String code) {

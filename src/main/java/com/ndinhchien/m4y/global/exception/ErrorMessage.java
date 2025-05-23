@@ -20,8 +20,9 @@ public class ErrorMessage {
     public static final String DIOCESE_NOT_FOUND = "Diocese does not exist.";
     public static final String DEANERY_NOT_FOUND = "Deanary does not exist.";
     public static final String PARISH_NOT_FOUND = "Parish does not exist.";
-    public static final String PROJECT_NOT_FOUND = "Project does not exist.";
     public static final String CHANNEL_NOT_FOUND = "Channel does not exist.";
+    public static final String VIDEO_NOT_FOUND = "Video does not exist.";
+    public static final String PROJECT_NOT_FOUND = "Project does not exist.";
     public static final String SUBTITLE_NOT_FOUND = "Subtitle does not exist.";
     public static final String COMMENT_NOT_FOUND = "Comment does not exist.";
     public static final String REPLY_NOT_FOUND = "Reply does not exist.";

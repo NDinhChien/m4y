@@ -8,15 +8,15 @@ This is my personal dream project—not overly complex or fancy, but I truly hop
 
 ## 🚀 Features
 
-### 📽️ Projects & Subtitles
+### 📽️ Project & Subtitle
 
 ![project](./images/api/project.png)
 
 - Videos are sourced from **YouTube**
-- Video metadata and **source subtitles** (original language) can be extracted from YouTube — this process is handled on the frontend (Next.js) to simplify backend responsibilities
+- Video metadata and **source subtitles** (original language) can be scraped from YouTube — this process is handled on the frontend (Next.js) to simplify backend responsibilities
 - Each **Project** represents a unique pairing of:
   - **Video**
-  - **Target Language**
+  - **Language**
 
 > For example:
 >
@@ -30,7 +30,7 @@ This is my personal dream project—not overly complex or fancy, but I truly hop
 - Real-time collaborative subtitle editing is **coming soon**
 - Flexible project search capabilities:
   - By **keywords** _(optional)_
-  - By **target language** _(optional)_
+  - By **language** _(optional)_
   - Sorted by **relevance**, **view count**, or **creation time**
 
 > Powered by PostgreSQL **Full-Text Search**
@@ -49,11 +49,15 @@ This is my personal dream project—not overly complex or fancy, but I truly hop
 
 ```json
 {
-  "videoSrcUrl": "https://youtube.com/...",
-  "srcText": { "text": "Hello, world!", "langCode": "en" },
+  "videoUrl": "https://youtube.com/...",
+  "srcText": {
+    "text": "Hello, world!",
+    "langCode": "en",
+    "translator": "admin1"
+  },
   "desTexts": [
-    { "text": "Xin chào, thế giới!", "langCode": "vi" },
-    { "text": "Bonjour, le monde!", "langCode": "fr" }
+    { "text": "Xin chào, thế giới!", "langCode": "vi", "translator": "admin1" },
+    { "text": "Bonjour, le monde!", "langCode": "fr", "translator": "admin2" }
   ]
 }
 ```
@@ -78,7 +82,7 @@ This is my personal dream project—not overly complex or fancy, but I truly hop
 
 ![address](./images/api/address.png)
 
-- Smaller address entities: **Diocese**, **Deanery**, **Parish** (catholic system)
+- Smaller address entities: **Diocese**, **Deanery**, **Parish**
 - Users can propose new addresses for admin approval
 - Community can react to proposed addresses
 

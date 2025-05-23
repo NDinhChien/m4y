@@ -23,9 +23,17 @@ public class LanguageService {
         return languageRepository.existsByCode(langCode);
     }
 
-    public Language validateLanguage(@NotNull String languageName) {
+    public Language validateLanguageByCode(@NotNull String langCode) {
 
-        return languageRepository.findByName(languageName).orElseThrow(() -> {
+        return languageRepository.findByCode(langCode).orElseThrow(() -> {
+
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.LANGUAGE_NOT_FOUND);
+        });
+    }
+
+    public Language validateLanguage(@NotNull String langName) {
+
+        return languageRepository.findByName(langName).orElseThrow(() -> {
 
             throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.LANGUAGE_NOT_FOUND);
         });

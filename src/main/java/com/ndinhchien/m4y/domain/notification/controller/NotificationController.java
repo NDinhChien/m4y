@@ -19,6 +19,7 @@ import com.ndinhchien.m4y.domain.notification.service.NotificationService;
 import com.ndinhchien.m4y.global.dto.BaseResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -30,12 +31,14 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @Operation(summary = "Get notification by date")
+    @Operation(summary = "Get notifications in range")
     @GetMapping
     public BaseResponse<List<INotification>> getNotificationsByDate(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date) {
-        return BaseResponse.success("Notifications", notificationService.getNotifications(userDetails.getUser(), date));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant end) {
+        return BaseResponse.success("Notifications",
+                notificationService.getNotifications(userDetails.getUser(), start, end));
     }
 
     @Operation(summary = "Mark notification as read")
@@ -48,12 +51,13 @@ public class NotificationController {
                 notificationService.markAsRead(userDetails.getUser(), notificationId));
     }
 
-    @Operation(summary = "Clear all notifications")
-    @DeleteMapping("/all")
-    public BaseResponse<Long> hardDeleteAll(
-            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    @Operation(summary = "Delete notifications")
+    @DeleteMapping
+    public BaseResponse<Long> hardDeleteMany(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody List<Long> ids) {
 
         return BaseResponse.success("Hard delete all",
-                notificationService.hardDeleteAll(userDetails.getUser()));
+                notificationService.hardDeleteNotificactions(userDetails.getUser(), ids));
     }
 }

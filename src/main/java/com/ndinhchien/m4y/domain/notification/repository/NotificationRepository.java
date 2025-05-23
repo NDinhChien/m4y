@@ -13,7 +13,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     List<INotification> findAllByUserAndCreatedAtGreaterThanAndCreatedAtLessThan(User user, Instant start, Instant end);
 
-    long deleteAllByIdInAndUser(List<Long> ids, User user);
+    long deleteAllByUserAndIdIn(User user, List<Long> ids);
 
-    long deleteAllByUser(User user);
 }

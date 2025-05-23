@@ -9,7 +9,5 @@ import com.ndinhchien.m4y.domain.subtitle.entity.Subtitle;
 
 public interface SubtitleRepository extends JpaRepository<Subtitle, Long> {
 
-    long countByProjectSrcUrl(String projectSrcUrl);
-
-    List<ISubtitle> findAllByProjectSrcUrl(String projectSrcUrl);
+    List<ISubtitle> findAllByVideoUrl(String videoUrl);
 }

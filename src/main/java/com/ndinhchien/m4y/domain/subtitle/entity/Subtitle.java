@@ -4,21 +4,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ndinhchien.m4y.domain.project.entity.Project;
-import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.AddSubtitleDto;
+import com.ndinhchien.m4y.domain.project.entity.Video;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.UpdateDesTextDto;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.UpdateSubtitleDto;
 import com.ndinhchien.m4y.domain.subtitle.type.SubtitleText;
 import com.ndinhchien.m4y.domain.user.entity.User;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -36,7 +32,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 @Getter
 @Entity
 @Table(name = "subtitles", indexes = {
-        @Index(name = "subtitles_project_src_url_idx", columnList = "project_src_url"),
+        @Index(name = "subtitles_video_url_idx", columnList = "video_url"),
 })
 public class Subtitle implements Serializable {
 
@@ -44,8 +40,16 @@ public class Subtitle implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "video_id")
+    private Video video;
+
+    @Column(name = "video_id", nullable = false, insertable = false, updatable = false)
+    private Long videoId;
+
     @Column(nullable = false)
-    private String projectSrcUrl;
+    private String videoUrl;
 
     @Column(nullable = false)
     private Integer startAt;
@@ -61,53 +65,43 @@ public class Subtitle implements Serializable {
     @Column(columnDefinition = "jsonb")
     private List<SubtitleText> desTexts;
 
-    @Column(name = "creator_id", nullable = false, insertable = false, updatable = false)
-    private Long creatorId;
-
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id")
-    private User creator;
-
-    public Subtitle(User creator, String projectSrcUrl, String projectSrcLangCode, Integer start,
+    public Subtitle(User creator, Video video, Integer start,
             Integer end, String text) {
-        this.projectSrcUrl = projectSrcUrl;
-        this.creator = creator;
-        this.creatorId = creator.getId();
+
+        this.video = video;
+        this.videoId = video.getId();
+        this.videoUrl = video.getUrl();
+
         this.startAt = start;
         this.endAt = end;
-        this.srcText = new SubtitleText(projectSrcLangCode, text, creator);
+        this.srcText = new SubtitleText(video.getLangCode(), text, creator);
 
         this.desTexts = new ArrayList<>();
     }
 
-    public SubtitleText getDesText(String languageCode) {
+    private SubtitleText getDesText(String langCode) {
         for (SubtitleText text : this.desTexts) {
-            if (text.getLangCode().equals(languageCode)) {
+            if (text.getLangCode().equals(langCode)) {
                 return text;
             }
         }
         return null;
     }
 
-    public void updateSrcText(SubtitleText srcText) {
-        this.srcText = srcText;
+    private void updateSrcText(String text) {
+        this.srcText.updateText(text);
     }
 
-    public void updateDesText(User admin, UpdateDesTextDto dto, String desLangCode) {
-        SubtitleText current = getDesText(desLangCode);
+    public void update(User translator, String text, String langCode) {
+        SubtitleText current = getDesText(langCode);
         if (current != null) {
-            current.updateText(dto.getDesText());
+            current.updateText(text);
         } else {
-            this.desTexts.add(new SubtitleText(desLangCode, dto.getDesText(), admin));
+            this.desTexts.add(new SubtitleText(langCode, text, translator));
         }
     }
 
-    public boolean isCreator(User admin) {
-        return admin.getId().equals(this.creatorId);
-    }
-
-    public void creatorUpdate(User creator, UpdateSubtitleDto dto, String srcLangCode) {
+    public void update(User creator, UpdateSubtitleDto dto) {
         Integer start = dto.getStart();
         Integer end = dto.getEnd();
         String srcText = dto.getSrcText();
@@ -119,13 +113,11 @@ public class Subtitle implements Serializable {
         }
 
         if (StringUtils.hasText(srcText)) {
-            updateSrcText(new SubtitleText(srcLangCode, srcText, creator));
+            updateSrcText(srcText);
         }
     }
 
-    public boolean creatorCanDelete(User admin) {
-        if (!isCreator(admin))
-            return false;
+    public boolean hasOtherAdminDesTexts(User admin) {
         return this.desTexts.stream().anyMatch(text -> !text.getTranslatorId().equals(admin.getId()));
     }
 }
