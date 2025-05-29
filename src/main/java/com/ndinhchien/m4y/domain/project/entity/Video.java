@@ -6,7 +6,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ndinhchien.m4y.domain.address.entity.Language;
+import com.ndinhchien.m4y.domain.proposal.entity.Language;
+import com.ndinhchien.m4y.domain.subtitle.entity.Subtitle;
 import com.ndinhchien.m4y.domain.user.entity.User;
 
 import jakarta.persistence.CascadeType;
@@ -54,6 +55,9 @@ public class Video {
     @Column(length = 1024)
     private String description;
 
+    @Column
+    private String image;
+
     @Column(nullable = false)
     private Integer duration;
 
@@ -70,15 +74,21 @@ public class Video {
 
     @JsonIgnore
     @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Subtitle> subtitles;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Project> projects;
 
     @Builder
-    public Video(Channel channel, String url, String name, String description, Integer duration, Language language) {
+    public Video(Channel channel, String url, String name, String description, String image, Integer duration,
+            Language language) {
         this.channel = channel;
         this.channelId = channel.getId();
         this.url = url;
         this.name = name;
         this.description = description;
+        this.image = image;
         this.duration = duration;
         this.langCode = language.getCode();
     }

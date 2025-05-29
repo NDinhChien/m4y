@@ -1,4 +1,4 @@
-package com.ndinhchien.m4y.global.entity;
+package com.ndinhchien.m4y.domain.proposal.entity;
 
 import java.io.Serializable;
 import java.time.Instant;

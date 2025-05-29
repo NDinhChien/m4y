@@ -1,22 +1,21 @@
-package com.ndinhchien.m4y.domain.address.dto;
+package com.ndinhchien.m4y.domain.proposal.dto;
 
-import com.ndinhchien.m4y.domain.address.type.AddresssType;
-import com.ndinhchien.m4y.domain.reaction.type.Emoji;
+import com.ndinhchien.m4y.domain.proposal.type.ProposalType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
-public class AddressRequestDto {
+public class ProposalRequestDto {
 
     @Getter
-    public static class AddAddressDto {
+    public static class AddProposalDto {
 
         @NotBlank
         private String name;
 
         @NotNull
-        private AddresssType type;
+        private ProposalType type;
 
         private String countryName;
 
@@ -24,26 +23,26 @@ public class AddressRequestDto {
 
         private String deaneryName;
 
-        private String detailedAddress;
+        private String address;
 
     }
 
     @Getter
-    public static class DeleteAddressDto {
+    public static class DeleteProposalDto {
         @NotBlank
         private String name;
 
         @NotNull
-        private AddresssType type;
+        private ProposalType type;
     }
 
     @Getter
-    public static class UpdateAddressDto {
+    public static class UpdateProposalDto {
         @NotBlank
         private String name;
 
         @NotNull
-        private AddresssType type;
+        private ProposalType type;
 
         @NotNull
         private Boolean isApproved;

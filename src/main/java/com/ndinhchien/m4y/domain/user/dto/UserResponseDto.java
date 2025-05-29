@@ -4,8 +4,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
+import com.ndinhchien.m4y.domain.notification.dto.NotificationResponseDto.INotification;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
-import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IProject;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IRequest;
 import com.ndinhchien.m4y.domain.user.type.UserRole;
 
 public class UserResponseDto {
@@ -56,6 +57,8 @@ public class UserResponseDto {
 
         Set<Long> getFollowings();
 
-        List<IProject> getProjects();
+        List<IRequest> getRequests();
+
+        List<INotification> getNotifications();
     }
 }

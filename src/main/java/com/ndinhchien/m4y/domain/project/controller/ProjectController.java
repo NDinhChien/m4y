@@ -3,7 +3,9 @@ package com.ndinhchien.m4y.domain.project.controller;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,21 +17,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ndinhchien.m4y.domain.auth.type.UserDetailsImpl;
-import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.AcceptTranslatorDto;
-import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.AddTranslatorsDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.CreateProjectDto;
+import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.CreateVideoDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.UpdateProjectDto;
-import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IChannel;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicChannel;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProjectWithRequest;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IVideo;
 import com.ndinhchien.m4y.domain.project.entity.Project;
-import com.ndinhchien.m4y.domain.project.entity.ProjectTranslator;
+import com.ndinhchien.m4y.domain.project.entity.Video;
 import com.ndinhchien.m4y.domain.project.service.ProjectService;
-import com.ndinhchien.m4y.domain.project.service.ProjectTranslatorService;
 import com.ndinhchien.m4y.domain.project.type.ProjectSortBy;
+import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IPublicUser;
 import com.ndinhchien.m4y.global.dto.BaseResponse;
 import com.ndinhchien.m4y.global.dto.PageDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -40,22 +45,50 @@ import lombok.RequiredArgsConstructor;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final ProjectTranslatorService translatorService;
+
+    @Operation(summary = "Get channels")
+    @GetMapping("/channel/all")
+    public BaseResponse<?> getChannels() {
+        return BaseResponse.success("Channels", projectService.getChannels());
+    }
+
+    @Operation(summary = "Get video by url")
+    @GetMapping("/video")
+    public BaseResponse<IVideo> getVideoByUrl(
+            @RequestParam String videoUrl) {
+        return BaseResponse.success("Video", projectService.getVideoByUrl(videoUrl));
+    }
+
+    @Operation(summary = "Create video")
+    @PostMapping("/video")
+    public BaseResponse<Video> createVideo(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody @Valid CreateVideoDto requestDto) {
+        return BaseResponse.success("Video created",
+                projectService.createVideo(userDetails.getUser(), requestDto));
+    }
 
     @Operation(summary = "Get project by id")
     @GetMapping("/id/{id}")
     public BaseResponse<?> getProject(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @AuthenticationPrincipal @Nullable UserDetailsImpl userDetails,
             @PathVariable Long id) {
         return BaseResponse.success("Project",
                 projectService.getProjectById(userDetails == null ? null : userDetails.getUser(), id));
     }
 
-    @Operation(summary = "Get projects by channel")
-    @GetMapping("/channel")
-    public BaseResponse<?> getProjectsByChannel(
-            @RequestParam String url) {
-        return BaseResponse.success("Channel's projects", projectService.getProjectsByChannel(url));
+    @Operation(summary = "Get projects")
+    @GetMapping("/many")
+    @Transactional(readOnly = true)
+    public List<IBasicProject> getProjectsByIds(List<Long> ids) {
+        return projectService.getProjectsByIds(ids);
+    }
+
+    @Operation(summary = "Get user's projects")
+    @GetMapping("/all")
+    public BaseResponse<List<IBasicProjectWithRequest>> getProjects(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return BaseResponse.success("Projects", projectService.getProjectsByAdmin(userDetails.getUser()));
     }
 
     @Operation(summary = "Create project")
@@ -69,7 +102,7 @@ public class ProjectController {
 
     @Operation(summary = "Update view count")
     @PutMapping("/viewCount")
-    public BaseResponse<?> updateViewCount(
+    public BaseResponse<Integer> updateViewCount(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam Long projectId) {
         return BaseResponse.success("Project updated",
@@ -93,28 +126,9 @@ public class ProjectController {
                 projectService.hardDeleteProjects(userDetails.getUser(), ids));
     }
 
-    @Operation(summary = "Add translators")
-    @PostMapping("/translators")
-    public BaseResponse<List<ProjectTranslator>> addTranslators(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody AddTranslatorsDto requestDto) {
-        return BaseResponse.success("Translators added",
-                translatorService.adminAddTranslators(userDetails.getUser(), requestDto));
-    }
-
-    @Operation(summary = "Accept translator")
-    @PutMapping("/translator")
-    public BaseResponse<?> acceptTranslator(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody AcceptTranslatorDto requestDto) {
-        return BaseResponse.success("Translator accepted",
-                translatorService.adminAcceptTranslatorRequest(userDetails.getUser(),
-                        requestDto.getRequestId()));
-    }
-
     @Operation(summary = "Search channels")
     @GetMapping("/channel/search")
-    public BaseResponse<List<IChannel>> searchChannels(
+    public BaseResponse<List<IBasicChannel>> searchChannels(
             @RequestParam String name) {
         return BaseResponse.success("Search channels", projectService.searchChannels(name));
     }
@@ -124,9 +138,12 @@ public class ProjectController {
     public BaseResponse<?> searchProjects(
             @RequestParam(defaultValue = "") String keywords,
             @RequestParam(defaultValue = "all") String langCode,
+            @RequestParam(defaultValue = "") String channelUrl,
             @RequestParam(defaultValue = "relevance") ProjectSortBy sortBy,
+            @RequestParam(defaultValue = "DESC") Direction sortOrder,
             @RequestParam(defaultValue = "0") int pageNumber) {
-        Page<?> page = projectService.searchProjects(keywords, langCode, sortBy, pageNumber);
+        Page<?> page = projectService.searchProjects(keywords, langCode, sortBy, sortOrder, channelUrl,
+                pageNumber);
         return BaseResponse.success("Search projects", new PageDto<>(page));
     }
 }

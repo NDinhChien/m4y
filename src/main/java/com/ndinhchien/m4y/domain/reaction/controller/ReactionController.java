@@ -1,6 +1,7 @@
 package com.ndinhchien.m4y.domain.reaction.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,42 +26,50 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/react")
 @RestController
 public class ReactionController {
-        private final ReactionService reactionService;
+     private final ReactionService reactionService;
 
-        @Operation(summary = "React to address")
-        @PutMapping("/address")
-        public BaseResponse<?> reactToProposal(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody @Valid ReactToProposalDto requestDto) {
+     @Operation(summary = "Get proposal reactions")
+     @GetMapping("/proposal")
+     public BaseResponse<?> getProposalReactions(
+               @AuthenticationPrincipal UserDetailsImpl userDetails) {
+          return BaseResponse.success("Proposal reactions",
+                    reactionService.getProposalReactions(userDetails.getUser()));
+     }
 
-                return BaseResponse.success("React to address",
-                                reactionService.reactToProposal(userDetails.getUser(), requestDto));
-        }
+     @Operation(summary = "React to proposal")
+     @PutMapping("/proposal")
+     public BaseResponse<?> reactToProposal(
+               @AuthenticationPrincipal UserDetailsImpl userDetails,
+               @RequestBody @Valid ReactToProposalDto requestDto) {
 
-        @Operation(summary = "React to project")
-        @PutMapping("/project")
-        public BaseResponse<?> reactToProject(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody @Valid ReactToProjectDto requestDto) {
-                return BaseResponse.success("React to project",
-                                reactionService.reactToProject(userDetails.getUser(), requestDto));
-        }
+          return BaseResponse.success("React to proposal",
+                    reactionService.reactToProposal(userDetails.getUser(), requestDto));
+     }
 
-        @Operation(summary = "React to comment")
-        @PutMapping("/comment")
-        public BaseResponse<?> reactToComment(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody @Valid ReactToCommentDto requestDto) {
-                return BaseResponse.success("React to comment",
-                                reactionService.reactToComment(userDetails.getUser(), requestDto));
-        }
+     @Operation(summary = "React to project")
+     @PutMapping("/project")
+     public BaseResponse<?> reactToProject(
+               @AuthenticationPrincipal UserDetailsImpl userDetails,
+               @RequestBody @Valid ReactToProjectDto requestDto) {
+          return BaseResponse.success("React to project",
+                    reactionService.reactToProject(userDetails.getUser(), requestDto));
+     }
 
-        @Operation(summary = "React to message")
-        @PutMapping("/message")
-        public BaseResponse<MessageReaction> reactToMessage(
-                        @AuthenticationPrincipal UserDetailsImpl userDetails,
-                        @RequestBody @Valid ReactToMessageDto requestDto) {
-                return BaseResponse.success("React to message",
-                                reactionService.reactToMessage(userDetails.getUser(), requestDto));
-        }
+     @Operation(summary = "React to comment")
+     @PutMapping("/comment")
+     public BaseResponse<?> reactToComment(
+               @AuthenticationPrincipal UserDetailsImpl userDetails,
+               @RequestBody @Valid ReactToCommentDto requestDto) {
+          return BaseResponse.success("React to comment",
+                    reactionService.reactToComment(userDetails.getUser(), requestDto));
+     }
+
+     @Operation(summary = "React to message")
+     @PutMapping("/message")
+     public BaseResponse<MessageReaction> reactToMessage(
+               @AuthenticationPrincipal UserDetailsImpl userDetails,
+               @RequestBody @Valid ReactToMessageDto requestDto) {
+          return BaseResponse.success("React to message",
+                    reactionService.reactToMessage(userDetails.getUser(), requestDto));
+     }
 }

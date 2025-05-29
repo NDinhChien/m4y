@@ -32,55 +32,55 @@ import lombok.RequiredArgsConstructor;
 @RestController
 public class SubtitleController {
 
-    private final SubtitleService subtitleService;
+        private final SubtitleService subtitleService;
 
-    @Operation(summary = "Get project's subtitles")
-    @GetMapping
-    public BaseResponse<List<ISubtitle>> getSubtitles(
-            @RequestParam String videoUrl) {
-        return BaseResponse.success("Project's subtitles", subtitleService.getSubtitles(videoUrl));
-    }
+        @Operation(summary = "Get video's subtitles")
+        @GetMapping
+        public BaseResponse<List<ISubtitle>> getSubtitles(
+                        @RequestParam String videoUrl) {
+                return BaseResponse.success("Video's subtitles", subtitleService.getSubtitles(videoUrl));
+        }
 
-    @Operation(summary = "Add subtitles")
-    @PostMapping("/source")
-    public BaseResponse<List<Subtitle>> addSubtitles(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam String videoUrl,
-            @RequestBody List<@Valid AddSubtitleDto> requestDto) {
+        @Operation(summary = "Add subtitles")
+        @PostMapping("/source")
+        public BaseResponse<List<Subtitle>> addSubtitles(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails,
+                        @RequestParam String videoUrl,
+                        @RequestBody List<@Valid AddSubtitleDto> requestDto) {
 
-        return BaseResponse.success("Add subtitles",
-                subtitleService.creatorAddSubtitles(userDetails.getUser(), videoUrl, requestDto));
-    }
+                return BaseResponse.success("Add subtitles",
+                                subtitleService.creatorAddSubtitles(userDetails.getUser(), videoUrl, requestDto));
+        }
 
-    @Operation(summary = "Update subtitles")
-    @PutMapping("/source")
-    public BaseResponse<List<Subtitle>> updateSubtitles(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam String videoUrl,
-            @RequestBody List<@Valid UpdateSubtitleDto> requestDto) {
-        return BaseResponse.success("Update subtitles",
-                subtitleService.creatorUpdateSubtitles(userDetails.getUser(), videoUrl,
-                        requestDto));
-    }
+        @Operation(summary = "Update subtitles")
+        @PutMapping("/source")
+        public BaseResponse<List<Subtitle>> updateSubtitles(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails,
+                        @RequestParam String videoUrl,
+                        @RequestBody List<@Valid UpdateSubtitleDto> requestDto) {
+                return BaseResponse.success("Update subtitles",
+                                subtitleService.creatorUpdateSubtitles(userDetails.getUser(), videoUrl,
+                                                requestDto));
+        }
 
-    @Operation(summary = "Delete subtitles")
-    @DeleteMapping("/source")
-    public BaseResponse<List<Subtitle>> deteteSubtitles(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody List<Long> ids) {
-        return BaseResponse.success("Subtitles deleted",
-                subtitleService.creatorHardDeleteSubtitles(userDetails.getUser(), ids));
-    }
+        @Operation(summary = "Delete subtitles")
+        @DeleteMapping("/source")
+        public BaseResponse<List<Subtitle>> deteteSubtitles(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails,
+                        @RequestBody List<Long> ids) {
+                return BaseResponse.success("Subtitles deleted",
+                                subtitleService.creatorHardDeleteSubtitles(userDetails.getUser(), ids));
+        }
 
-    @Operation(summary = "Update subtitles (translations)")
-    @PutMapping("/destination")
-    public BaseResponse<List<Subtitle>> updateDesTexts(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam String videoUrl,
-            @RequestParam String langCode,
-            @RequestBody List<@Valid UpdateDesTextDto> requestDto) {
-        return BaseResponse.success("Update subtitles",
-                subtitleService.updateDesTexts(userDetails.getUser(), videoUrl, langCode,
-                        requestDto));
-    }
+        @Operation(summary = "Update subtitles (translations)")
+        @PutMapping("/destination")
+        public BaseResponse<List<Subtitle>> updateDesTexts(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails,
+                        @RequestParam String videoUrl,
+                        @RequestParam String langCode,
+                        @RequestBody List<@Valid UpdateDesTextDto> requestDto) {
+                return BaseResponse.success("Update subtitles",
+                                subtitleService.updateDesTexts(userDetails.getUser(), videoUrl, langCode,
+                                                requestDto));
+        }
 }

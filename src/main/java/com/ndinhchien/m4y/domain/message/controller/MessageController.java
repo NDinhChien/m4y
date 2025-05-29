@@ -22,7 +22,7 @@ import com.ndinhchien.m4y.domain.message.service.MessageService;
 import com.ndinhchien.m4y.domain.user.entity.User;
 import com.ndinhchien.m4y.global.dto.BaseResponse;
 import com.ndinhchien.m4y.global.dto.PageDto;
-import com.ndinhchien.m4y.global.service.MessageManager;
+import com.ndinhchien.m4y.global.websocket.MessageManager;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

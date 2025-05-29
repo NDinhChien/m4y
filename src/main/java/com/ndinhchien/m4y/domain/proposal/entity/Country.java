@@ -1,11 +1,10 @@
-package com.ndinhchien.m4y.domain.address.entity;
+package com.ndinhchien.m4y.domain.proposal.entity;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ndinhchien.m4y.domain.user.entity.User;
-import com.ndinhchien.m4y.global.entity.Proposable;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -11,7 +11,7 @@ public class NotificationResponseDto {
 
         String getContent();
 
-        Boolean getIsRead();
+        Boolean getIsViewed();
 
         Instant getCreatedAt();
     }

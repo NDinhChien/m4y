@@ -19,8 +19,8 @@ import com.ndinhchien.m4y.domain.message.repository.MessageRepository;
 import com.ndinhchien.m4y.domain.user.entity.User;
 import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
-import com.ndinhchien.m4y.global.service.MessageManager;
 import com.ndinhchien.m4y.global.websocket.MessageDestination;
+import com.ndinhchien.m4y.global.websocket.MessageManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

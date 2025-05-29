@@ -1,6 +1,6 @@
 package com.ndinhchien.m4y.domain.reaction.dto;
 
-import com.ndinhchien.m4y.domain.address.type.AddresssType;
+import com.ndinhchien.m4y.domain.proposal.type.ProposalType;
 import com.ndinhchien.m4y.domain.reaction.type.Emoji;
 
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +16,7 @@ public class ReactionRequestDto {
         private String proposalName;
 
         @NotNull
-        private AddresssType proposalType;
+        private ProposalType proposalType;
 
         private Emoji emoji;
 

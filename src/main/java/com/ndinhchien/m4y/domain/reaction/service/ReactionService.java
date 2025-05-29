@@ -1,18 +1,11 @@
 package com.ndinhchien.m4y.domain.reaction.service;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ndinhchien.m4y.domain.address.entity.Country;
-import com.ndinhchien.m4y.domain.address.entity.Deanery;
-import com.ndinhchien.m4y.domain.address.entity.Diocese;
-import com.ndinhchien.m4y.domain.address.entity.Language;
-import com.ndinhchien.m4y.domain.address.entity.Parish;
-import com.ndinhchien.m4y.domain.address.repository.LanguageRepository;
-import com.ndinhchien.m4y.domain.address.service.AddressService;
-import com.ndinhchien.m4y.domain.address.service.LanguageService;
-import com.ndinhchien.m4y.domain.address.type.AddresssType;
 import com.ndinhchien.m4y.domain.comment.entity.Comment;
 import com.ndinhchien.m4y.domain.comment.entity.Reply;
 import com.ndinhchien.m4y.domain.comment.repository.CommentRepository;
@@ -23,10 +16,20 @@ import com.ndinhchien.m4y.domain.message.repository.MessageRepository;
 import com.ndinhchien.m4y.domain.message.service.MessageService;
 import com.ndinhchien.m4y.domain.project.entity.Project;
 import com.ndinhchien.m4y.domain.project.repository.ProjectRepository;
+import com.ndinhchien.m4y.domain.proposal.entity.Country;
+import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
+import com.ndinhchien.m4y.domain.proposal.entity.Diocese;
+import com.ndinhchien.m4y.domain.proposal.entity.Language;
+import com.ndinhchien.m4y.domain.proposal.entity.Parish;
+import com.ndinhchien.m4y.domain.proposal.entity.Proposable;
+import com.ndinhchien.m4y.domain.proposal.repository.LanguageRepository;
+import com.ndinhchien.m4y.domain.proposal.service.ProposalService;
+import com.ndinhchien.m4y.domain.proposal.type.ProposalType;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToCommentDto;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToMessageDto;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToProjectDto;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToProposalDto;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProposalReaction;
 import com.ndinhchien.m4y.domain.reaction.entity.ProposalReaction;
 import com.ndinhchien.m4y.domain.reaction.entity.CommentReaction;
 import com.ndinhchien.m4y.domain.reaction.entity.MessageReaction;
@@ -36,14 +39,13 @@ import com.ndinhchien.m4y.domain.reaction.repository.CommentReactionRepository;
 import com.ndinhchien.m4y.domain.reaction.repository.MessageReactionRepository;
 import com.ndinhchien.m4y.domain.reaction.repository.ProjectReactionRepository;
 import com.ndinhchien.m4y.domain.reaction.type.Emoji;
-import com.ndinhchien.m4y.domain.reaction.type.BaseReaction;
 import com.ndinhchien.m4y.domain.user.entity.User;
-import com.ndinhchien.m4y.global.entity.Proposable;
 import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
-import com.ndinhchien.m4y.global.service.MessageManager;
 import com.ndinhchien.m4y.global.websocket.MessageDestination;
+import com.ndinhchien.m4y.global.websocket.MessageManager;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,9 +54,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class ReactionService {
 
-    private final LanguageService languageService;
+    private final LanguageRepository languageRepository;
 
-    private final AddressService addressService;
+    private final ProposalService proposalService;
 
     private final MessageService messageService;
 
@@ -76,10 +78,15 @@ public class ReactionService {
 
     private final MessageManager messageManager;
 
+    @Transactional(readOnly = true)
+    public List<IProposalReaction> getProposalReactions(User user) {
+        return proposalReactionRepository.findAllByUser(user);
+    }
+
     @Transactional
     public ProposalReaction reactToProposal(User user, ReactToProposalDto requestDto) {
         String name = requestDto.getProposalName();
-        AddresssType type = requestDto.getProposalType();
+        ProposalType type = requestDto.getProposalType();
         Emoji emoji = requestDto.getEmoji();
         Boolean isDeleted = requestDto.getIsDeleted();
 
@@ -191,31 +198,39 @@ public class ReactionService {
         });
     }
 
-    private Proposable updateProposal(AddresssType type, String name, int count) {
-        if (type == AddresssType.LANGUAGE) {
-            Language language = languageService.validateLanguage(name);
+    public Language validateLanguage(@NotNull String langName) {
+
+        return languageRepository.findByName(langName).orElseThrow(() -> {
+
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.LANGUAGE_NOT_FOUND);
+        });
+    }
+
+    private Proposable updateProposal(ProposalType type, String name, int count) {
+        if (type == ProposalType.LANGUAGE) {
+            Language language = validateLanguage(name);
             language.updateReactCount(count);
-            return languageService.save(language);
+            return languageRepository.save(language);
         }
-        if (type == AddresssType.COUNTRY) {
-            Country country = addressService.validateCountry(name);
+        if (type == ProposalType.COUNTRY) {
+            Country country = proposalService.validateCountry(name);
             country.updateReactCount(count);
-            return addressService.save(country);
+            return proposalService.save(country);
         }
-        if (type == AddresssType.DIOCESE) {
-            Diocese diocese = addressService.validateDiocese(name);
+        if (type == ProposalType.DIOCESE) {
+            Diocese diocese = proposalService.validateDiocese(name);
             diocese.updateReactCount(count);
-            return addressService.save(diocese);
+            return proposalService.save(diocese);
         }
-        if (type == AddresssType.DEANERY) {
-            Deanery deanery = addressService.validateDeanary(name);
+        if (type == ProposalType.DEANERY) {
+            Deanery deanery = proposalService.validateDeanary(name);
             deanery.updateReactCount(count);
-            return addressService.save(deanery);
+            return proposalService.save(deanery);
         }
-        if (type == AddresssType.PARISH) {
-            Parish parish = addressService.validateParish(name);
+        if (type == ProposalType.PARISH) {
+            Parish parish = proposalService.validateParish(name);
             parish.updateReactCount(count);
-            return addressService.save(parish);
+            return proposalService.save(parish);
         }
         throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid target type");
     }

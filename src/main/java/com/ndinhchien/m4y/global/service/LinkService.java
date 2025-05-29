@@ -20,9 +20,8 @@ public class LinkService {
         return String.format(clientUrl + "/auth/reset?token=%s", token);
     }
 
-    public String getTranslatorRequestLink(Project project, User translator) {
-        return String.format(clientUrl + "/request?projectId=%s&translatorId=%s", project.getId().toString(),
-                translator.getId().toString());
+    public String getTranslatorRequestLink() {
+        return String.format(clientUrl + "/projects?tab=2");
     }
 
     public String getUserLink(User user) {

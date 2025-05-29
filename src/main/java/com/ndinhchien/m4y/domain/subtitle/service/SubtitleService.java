@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ndinhchien.m4y.domain.project.entity.Project;
 import com.ndinhchien.m4y.domain.project.entity.Video;
 import com.ndinhchien.m4y.domain.project.repository.ProjectRepository;
-import com.ndinhchien.m4y.domain.project.service.ProjectTranslatorService;
+import com.ndinhchien.m4y.domain.project.service.RequestService;
 import com.ndinhchien.m4y.domain.project.service.VideoService;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.AddSubtitleDto;
 import com.ndinhchien.m4y.domain.subtitle.dto.SubtitleRequestDto.UpdateDesTextDto;
@@ -32,7 +32,7 @@ public class SubtitleService {
 
     private final VideoService videoService;
     private final ProjectRepository projectRepository;
-    private final ProjectTranslatorService translatorService;
+    private final RequestService requestService;
     private final SubtitleRepository subtitleRepository;
 
     @Transactional(readOnly = true)
@@ -42,7 +42,7 @@ public class SubtitleService {
 
     @Transactional
     public List<Subtitle> creatorAddSubtitles(User user, String videoUrl, List<AddSubtitleDto> requestDto) {
-        Video video = videoService.validateVideo(videoUrl);
+        Video video = videoService.validate(videoUrl);
         if (!video.isCreator(user)) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "You are not the creator of this project's subtitles.");
         }
@@ -66,7 +66,7 @@ public class SubtitleService {
 
     @Transactional
     public List<Subtitle> creatorUpdateSubtitles(User user, String videoUrl, List<UpdateSubtitleDto> requestDto) {
-        Video video = videoService.validateVideo(videoUrl);
+        Video video = videoService.validate(videoUrl);
         if (!video.isCreator(user)) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "You are not the creator of this project's subtitles.");
         }
@@ -107,7 +107,7 @@ public class SubtitleService {
                     throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.PROJECT_NOT_FOUND);
                 });
 
-        if (!translatorService.isTranslator(project, user)) {
+        if (!requestService.isTranslator(project, user)) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "You are not a translator of this project");
         }
 

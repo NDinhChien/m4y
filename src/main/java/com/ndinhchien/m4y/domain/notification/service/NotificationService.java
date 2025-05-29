@@ -1,6 +1,7 @@
 package com.ndinhchien.m4y.domain.notification.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -17,9 +18,9 @@ import com.ndinhchien.m4y.domain.user.repository.UserRepository;
 import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
 import com.ndinhchien.m4y.global.service.LinkService;
-import com.ndinhchien.m4y.global.service.MessageManager;
 import com.ndinhchien.m4y.global.util.CommonUtils.InstantRange;
 import com.ndinhchien.m4y.global.websocket.MessageDestination;
+import com.ndinhchien.m4y.global.websocket.MessageManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,13 +51,18 @@ public class NotificationService {
     }
 
     @Transactional
-    public Notification markAsRead(User user, Long notificationId) {
-        Notification notification = validateNotification(notificationId);
-        if (notification.isRecipient(user) && !notification.getIsRead()) {
-            notification.updateIsRead();
-            return notificationRepository.save(notification);
+    public List<Notification> markAsViewed(User user, List<Long> ids) {
+        List<Notification> updated = new ArrayList<>();
+        List<Notification> notifications = notificationRepository.findAllById(ids);
+        for (Notification notification : notifications) {
+            if (notification.isRecipient(user) && !notification.getIsViewed()) {
+                notification.updateIsViewed();
+                notification = notificationRepository.save(notification);
+                updated.add(notification);
+            }
         }
-        return null;
+
+        return updated;
     }
 
     @Transactional
@@ -70,7 +76,7 @@ public class NotificationService {
         });
     }
 
-    private final String happyBirthdayToYou = """
+    private final String toUserHappyBirthday = """
                 Happy birthday to you %s,
                 We wish you good health and success in the coming year.
                 With love,
@@ -82,40 +88,40 @@ public class NotificationService {
         List<User> users = userRepository.findAllByBirthdayGreaterThanAndBirthdayLessThan(range.getStartOfDay(),
                 range.getEndOfDay());
         for (User user : users) {
-            String content = String.format(happyBirthdayToYou, user.getName());
+            String content = String.format(toUserHappyBirthday, user.getName());
             sendNotification(user, content);
         }
     }
 
-    private final String newTranslatorRequestComming = """
+    private final String toAdminNewRequest = """
                 %s want to become a translator of your project (%s).
             """;
 
-    public void send_ToAdmin_NewTranslatorRequestComming_Noti(Project project, User translator) {
-        String link = linkService.getTranslatorRequestLink(project, translator);
-        String content = String.format(newTranslatorRequestComming, translator.getName(), link);
+    public void sendToAdminNewRequest(Project project, User translator) {
+        String link = linkService.getTranslatorRequestLink();
+        String content = String.format(toAdminNewRequest, translator.getName(), link);
         User admin = project.getAdmin();
         sendNotification(admin, content);
     }
 
-    private final String translatorRequestAccepted = """
-                Your request are accepted, you can start editing subtitles of project (%s).
+    private final String toUserRequestHandled = """
+                Your request for project (%s) was just handled.
             """;
 
-    public void send_ToTranslator_TranslatorRequestAccepted_Notif(Project project, User translator) {
+    public void sendToUserRequestHandled(Project project, User translator) {
         String link = linkService.getProjectLink(project);
-        String content = String.format(translatorRequestAccepted, link);
+        String content = String.format(toUserRequestHandled, link);
         sendNotification(translator, content);
     }
 
-    private final String beingAddedAsTranslator = """
+    private final String toUserTranslatorAdded = """
                 You are added by %s as a translator of the project (%s).
             """;
 
-    public void send_ToTranslator_BeingAddedAsTranslator_Noti(Project project, User translator) {
+    public void sendToUserTranslatorAdded(Project project, User translator) {
         String link = linkService.getProjectLink(project);
         User admin = project.getAdmin();
-        String content = String.format(beingAddedAsTranslator, admin.getName(), link);
+        String content = String.format(toUserTranslatorAdded, admin.getName(), link);
         sendNotification(translator, content);
     }
 

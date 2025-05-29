@@ -15,14 +15,15 @@ import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ndinhchien.m4y.domain.address.entity.Country;
-import com.ndinhchien.m4y.domain.address.entity.Deanery;
-import com.ndinhchien.m4y.domain.address.entity.Diocese;
-import com.ndinhchien.m4y.domain.address.entity.Parish;
 import com.ndinhchien.m4y.domain.auth.type.SocialType;
 import com.ndinhchien.m4y.domain.notification.entity.Notification;
 import com.ndinhchien.m4y.domain.project.entity.Project;
-import com.ndinhchien.m4y.domain.project.entity.ProjectTranslator;
+import com.ndinhchien.m4y.domain.project.entity.Request;
+import com.ndinhchien.m4y.domain.proposal.entity.Country;
+import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
+import com.ndinhchien.m4y.domain.proposal.entity.Diocese;
+import com.ndinhchien.m4y.domain.proposal.entity.Parish;
+import com.ndinhchien.m4y.domain.reaction.entity.ProposalReaction;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateProfileDto;
 import com.ndinhchien.m4y.domain.user.type.UserRole;
 import com.ndinhchien.m4y.global.util.CommonUtils;
@@ -59,9 +60,11 @@ public class User implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @Column
     private String socialId;
 
+    @JsonIgnore
     @Column
     private SocialType socialType;
 
@@ -124,13 +127,13 @@ public class User implements Serializable {
     @Column(name = "parish_name", insertable = false, updatable = false)
     private String parishName;
 
-    @Column
-    private String address;
-
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parish_name")
     private Parish parish;
+
+    @Column
+    private String address;
 
     @Column(nullable = false)
     private Instant joinedAt;
@@ -156,11 +159,15 @@ public class User implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<ProjectTranslator> translators;
+    private List<Request> requests;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Notification> notifications;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ProposalReaction> proposalReactions;
 
     @PrePersist
     private void prePersist() {

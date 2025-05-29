@@ -1,23 +1,19 @@
 package com.ndinhchien.m4y;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ndinhchien.m4y.domain.address.entity.Country;
-import com.ndinhchien.m4y.domain.address.entity.Deanery;
-import com.ndinhchien.m4y.domain.address.entity.Diocese;
-import com.ndinhchien.m4y.domain.address.entity.Language;
-import com.ndinhchien.m4y.domain.address.entity.Parish;
-import com.ndinhchien.m4y.domain.address.repository.*;
+import com.ndinhchien.m4y.domain.proposal.entity.Country;
+import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
+import com.ndinhchien.m4y.domain.proposal.entity.Diocese;
+import com.ndinhchien.m4y.domain.proposal.entity.Language;
+import com.ndinhchien.m4y.domain.proposal.entity.Parish;
+import com.ndinhchien.m4y.domain.proposal.repository.*;
 import com.ndinhchien.m4y.domain.user.entity.User;
 import com.ndinhchien.m4y.domain.user.repository.UserRepository;
 import com.ndinhchien.m4y.domain.user.type.UserRole;

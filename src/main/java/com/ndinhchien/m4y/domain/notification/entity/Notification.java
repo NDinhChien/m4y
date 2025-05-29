@@ -42,15 +42,15 @@ public class Notification {
     private User user;
 
     @Column(nullable = false)
-    private Boolean isRead;
+    private Boolean isViewed;
 
     @Column(nullable = false)
     private Instant createdAt;
 
     @PrePersist
     private void prePersist() {
-        if (isRead == null) {
-            isRead = false;
+        if (isViewed == null) {
+            isViewed = false;
         }
         if (createdAt == null) {
             createdAt = Instant.now();
@@ -69,7 +69,7 @@ public class Notification {
         return this.userId.equals(user.getId());
     }
 
-    public void updateIsRead() {
-        this.isRead = true;
+    public void updateIsViewed() {
+        this.isViewed = true;
     }
 }

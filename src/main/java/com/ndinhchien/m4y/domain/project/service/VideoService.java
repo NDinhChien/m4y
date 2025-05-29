@@ -26,7 +26,7 @@ public class VideoService {
         return videoRepository.save(video);
     }
 
-    public Video validateVideo(String videoUrl) {
+    public Video validate(String videoUrl) {
         return videoRepository.findByUrl(videoUrl).orElseThrow(() -> {
             throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.VIDEO_NOT_FOUND);
         });

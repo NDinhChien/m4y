@@ -55,14 +55,12 @@ public class AuthService {
                 .password(password)
                 .build();
         if (verificationRequired == true) {
-
             emailService.sendAccountVerification(user, userName);
         } else {
             user.updateIsVerified();
         }
 
-        user = userRepository.save(user);
-        return user;
+        return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)

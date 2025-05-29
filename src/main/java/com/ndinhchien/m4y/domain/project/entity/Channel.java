@@ -40,14 +40,18 @@ public class Channel implements Serializable {
     @Column(length = 1024)
     private String description;
 
+    @Column
+    private String image;
+
     @JsonIgnore
     @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Video> videos;
 
     @Builder
-    public Channel(String url, String name, String description) {
+    public Channel(String url, String name, String description, String image) {
         this.url = url;
         this.name = name;
         this.description = description;
+        this.image = image;
     }
 }

@@ -36,7 +36,7 @@ public class BaseComment implements Serializable {
     @Column(nullable = false)
     private Integer reactCount;
 
-    @Column(nullable = false)
+    @Column
     private Instant editedAt;
 
     @Column(nullable = false)
@@ -52,9 +52,6 @@ public class BaseComment implements Serializable {
         }
         if (createdAt == null) {
             createdAt = Instant.now();
-        }
-        if (editedAt == null) {
-            editedAt = Instant.now();
         }
         if (reactCount == null) {
             reactCount = 0;

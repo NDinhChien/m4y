@@ -33,7 +33,7 @@ public class NotificationController {
 
     @Operation(summary = "Get notifications in range")
     @GetMapping
-    public BaseResponse<List<INotification>> getNotificationsByDate(
+    public BaseResponse<List<INotification>> getNotificationsInDateRange(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant end) {
@@ -41,19 +41,19 @@ public class NotificationController {
                 notificationService.getNotifications(userDetails.getUser(), start, end));
     }
 
-    @Operation(summary = "Mark notification as read")
-    @PutMapping
-    public BaseResponse<Notification> markAsRead(
+    @Operation(summary = "Mark notifications as read")
+    @PutMapping("/selected")
+    public BaseResponse<List<Notification>> markSelectedAsRead(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam Long notificationId) {
+            @RequestBody List<Long> ids) {
 
         return BaseResponse.success("Mark as read",
-                notificationService.markAsRead(userDetails.getUser(), notificationId));
+                notificationService.markAsViewed(userDetails.getUser(), ids));
     }
 
     @Operation(summary = "Delete notifications")
-    @DeleteMapping
-    public BaseResponse<Long> hardDeleteMany(
+    @DeleteMapping("/selected")
+    public BaseResponse<Long> hardDeleteSelected(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody List<Long> ids) {
 

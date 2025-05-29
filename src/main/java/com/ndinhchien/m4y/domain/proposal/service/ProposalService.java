@@ -1,4 +1,4 @@
-package com.ndinhchien.m4y.domain.address.service;
+package com.ndinhchien.m4y.domain.proposal.service;
 
 import java.util.List;
 import java.util.Map;
@@ -8,27 +8,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.ndinhchien.m4y.domain.address.dto.AddressRequestDto.AddAddressDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressRequestDto.DeleteAddressDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressRequestDto.UpdateAddressDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.ICountryDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.IDeaneryDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.IDioceseDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.ILanguageDto;
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.IParishDto;
-import com.ndinhchien.m4y.domain.address.entity.Country;
-import com.ndinhchien.m4y.domain.address.entity.Deanery;
-import com.ndinhchien.m4y.domain.address.entity.Diocese;
-import com.ndinhchien.m4y.domain.address.entity.Language;
-import com.ndinhchien.m4y.domain.address.entity.Parish;
-import com.ndinhchien.m4y.domain.address.repository.CountryRepository;
-import com.ndinhchien.m4y.domain.address.repository.DeaneryRepository;
-import com.ndinhchien.m4y.domain.address.repository.DioceseRepository;
-import com.ndinhchien.m4y.domain.address.repository.LanguageRepository;
-import com.ndinhchien.m4y.domain.address.repository.ParishRepository;
-import com.ndinhchien.m4y.domain.address.type.AddresssType;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalRequestDto.AddProposalDto;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalRequestDto.DeleteProposalDto;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalRequestDto.UpdateProposalDto;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.ICountry;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.IDeanery;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.IDiocese;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.IParish;
+import com.ndinhchien.m4y.domain.proposal.entity.Country;
+import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
+import com.ndinhchien.m4y.domain.proposal.entity.Diocese;
+import com.ndinhchien.m4y.domain.proposal.entity.Parish;
+import com.ndinhchien.m4y.domain.proposal.entity.Proposable;
+import com.ndinhchien.m4y.domain.proposal.repository.CountryRepository;
+import com.ndinhchien.m4y.domain.proposal.repository.DeaneryRepository;
+import com.ndinhchien.m4y.domain.proposal.repository.DioceseRepository;
+import com.ndinhchien.m4y.domain.proposal.repository.ParishRepository;
+import com.ndinhchien.m4y.domain.proposal.type.ProposalType;
 import com.ndinhchien.m4y.domain.user.entity.User;
-import com.ndinhchien.m4y.global.entity.Proposable;
 import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
 
@@ -39,9 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class AddressService {
-
-    private final LanguageRepository languageRepository;
+public class ProposalService {
 
     private final CountryRepository countryRepository;
 
@@ -52,62 +47,60 @@ public class AddressService {
     private final ParishRepository parishRepository;
 
     @Transactional(readOnly = true)
-    public Object getAddresses() {
-        List<ILanguageDto> languages = languageRepository.findAllByIsApproved(true);
-        List<ICountryDto> countries = countryRepository.findAllByIsApproved(true);
-        List<IDioceseDto> dioceses = dioceseRepository.findAllByIsApproved(true);
-        List<IDeaneryDto> deaneries = deaneryRepository.findAllByIsApproved(true);
-        List<IParishDto> parishes = parishRepository.findAllByIsApproved(true);
-
-        return Map.of("languages", languages, "countries", countries, "dioceses", dioceses, "deaneries", deaneries,
+    public Object getAddressProposals() {
+        List<ICountry> countries = countryRepository.findAllByIsApproved(true);
+        List<IDiocese> dioceses = dioceseRepository.findAllByIsApproved(true);
+        List<IDeanery> deaneries = deaneryRepository.findAllByIsApproved(true);
+        List<IParish> parishes = parishRepository.findAllByIsApproved(true);
+        return Map.of("countries", countries, "dioceses", dioceses, "deaneries", deaneries,
                 "parishes", parishes);
     }
 
     @Transactional
-    public Object addAddress(User proposer, AddAddressDto requestDto) {
-        AddresssType type = requestDto.getType();
+    public Object addAddressProposal(User proposer, AddProposalDto requestDto) {
+        ProposalType type = requestDto.getType();
         String name = requestDto.getName();
         String countryName = requestDto.getCountryName();
         String dioceseName = requestDto.getDioceseName();
         String deaneryName = requestDto.getDeaneryName();
-        String detailedAddress = requestDto.getDetailedAddress();
+        String address = requestDto.getAddress();
 
-        if (type == AddresssType.DIOCESE && StringUtils.hasText(countryName)
+        if (type == ProposalType.DIOCESE && StringUtils.hasText(countryName)
                 && !dioceseRepository.existsByName(name)) {
             Country country = validateCountry(countryName);
             return dioceseRepository.save(new Diocese(proposer, name, country));
 
-        } else if (type == AddresssType.DEANERY && StringUtils.hasText(dioceseName)
+        } else if (type == ProposalType.DEANERY && StringUtils.hasText(dioceseName)
                 && !deaneryRepository.existsByName(name)) {
             Diocese diocese = validateDiocese(dioceseName);
             return deaneryRepository.save(new Deanery(proposer, name, diocese));
 
-        } else if (type == AddresssType.PARISH && StringUtils.hasText(deaneryName)
+        } else if (type == ProposalType.PARISH && StringUtils.hasText(deaneryName)
                 && !parishRepository.existsByName(name)) {
             Deanery deanery = validateDeanary(deaneryName);
-            return parishRepository.save(new Parish(proposer, name, deanery, detailedAddress));
+            return parishRepository.save(new Parish(proposer, name, deanery, address));
         }
         throw new BusinessException(HttpStatus.BAD_REQUEST, "Params are missed out or The proposal already exists");
     }
 
     @Transactional
-    public Proposable sysAdminUpdateAddress(User admin, UpdateAddressDto requestDto) {
+    public Proposable sysAdminUpdateProposal(User admin, UpdateProposalDto requestDto) {
         if (!admin.isSysAdmin()) {
             return null;
         }
-        AddresssType type = requestDto.getType();
+        ProposalType type = requestDto.getType();
         String name = requestDto.getName();
         Boolean isApproved = requestDto.getIsApproved();
 
-        if (type == AddresssType.DIOCESE) {
+        if (type == ProposalType.DIOCESE) {
             Diocese diocese = validateDiocese(name);
             diocese.update(isApproved);
             return dioceseRepository.save(diocese);
-        } else if (type == AddresssType.DEANERY) {
+        } else if (type == ProposalType.DEANERY) {
             Deanery deanery = validateDeanary(name);
             deanery.update(isApproved);
             return deaneryRepository.save(deanery);
-        } else if (type == AddresssType.PARISH) {
+        } else if (type == ProposalType.PARISH) {
             Parish parish = validateParish(name);
             parish.update(isApproved);
             return parishRepository.save(parish);
@@ -117,18 +110,18 @@ public class AddressService {
     }
 
     @Transactional
-    public long sysAdminHardDeleteAddress(User admin, DeleteAddressDto requestDto) {
+    public long sysAdminHardDeleteProposal(User admin, DeleteProposalDto requestDto) {
         if (!admin.isSysAdmin()) {
             return 0;
         }
-        AddresssType type = requestDto.getType();
+        ProposalType type = requestDto.getType();
         String name = requestDto.getName();
 
-        if (type == AddresssType.DIOCESE) {
+        if (type == ProposalType.DIOCESE) {
             return dioceseRepository.deleteByName(name);
-        } else if (type == AddresssType.DEANERY) {
+        } else if (type == ProposalType.DEANERY) {
             return deaneryRepository.deleteByName(name);
-        } else if (type == AddresssType.PARISH) {
+        } else if (type == ProposalType.PARISH) {
             return parishRepository.deleteByName(name);
         }
         throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid address type.");
@@ -151,7 +144,6 @@ public class AddressService {
         return dioceseRepository.findByName(dioceseName).orElseThrow(() -> {
             throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.DIOCESE_NOT_FOUND);
         });
-
     }
 
     public Diocese save(Diocese diocese) {

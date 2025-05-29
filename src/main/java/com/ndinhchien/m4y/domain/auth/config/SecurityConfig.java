@@ -71,15 +71,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                .requestMatchers("/api/v1/auth/check", "/api/v1/auth/password", "/api/v1/auth/check").authenticated()
+                .requestMatchers("/api/v1/auth/password").authenticated()
                 .requestMatchers("/api/v1/auth/**").permitAll()
 
                 .requestMatchers("/api/v1/user/id/**", "/api/v1/user/search").permitAll()
                 .requestMatchers("/api/v1/user/**").authenticated()
 
-                .requestMatchers("/api/v1/address/all").permitAll()
-                .requestMatchers("/api/v1/address/sysadmin/**").hasAuthority(UserRole.ADMIN.name())
-                .requestMatchers("/api/v1/address/**").authenticated()
+                .requestMatchers("/api/v1/proposal/all").permitAll()
+                .requestMatchers("/api/v1/proposal/sys/**").hasAuthority(UserRole.ADMIN.name())
+                .requestMatchers("/api/v1/proposal/**").authenticated()
 
                 .requestMatchers("/api/v1/comment/project").permitAll()
                 .requestMatchers("/api/v1/comment/**").authenticated()
@@ -97,6 +97,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/project/id/**", "/api/v1/project/channel/**", "/api/v1/project/search")
                 .permitAll()
                 .requestMatchers("/api/v1/project/**").authenticated()
+
+                .requestMatchers("/api/v1/request/**").authenticated()
 
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/topic/**", "/queue/**").permitAll()

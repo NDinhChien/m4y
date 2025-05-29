@@ -10,9 +10,9 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ndinhchien.m4y.domain.address.entity.Language;
 import com.ndinhchien.m4y.domain.comment.entity.Comment;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.UpdateProjectDto;
+import com.ndinhchien.m4y.domain.proposal.entity.Language;
 import com.ndinhchien.m4y.domain.reaction.entity.ProjectReaction;
 import com.ndinhchien.m4y.domain.user.entity.User;
 
@@ -39,9 +39,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "projects", indexes = {
-        @Index(name = "projects_video_url_idx", columnList = "video_url"),
         @Index(name = "projects_admin_id_idx", columnList = "admin_id"),
-        @Index(name = "projects_channel_id_idx", columnList = "channel_id"),
+        @Index(name = "projects_video_url_idx", columnList = "video_url"),
+        @Index(name = "projects_channel_url_idx", columnList = "channel_url"),
         @Index(name = "projects_lang_code_idx", columnList = "lang_code"),
         @Index(name = "projects_created_at_idx", columnList = "created_at"),
         @Index(name = "projects_view_count_idx", columnList = "view_count"),
@@ -62,6 +62,9 @@ public class Project implements Serializable {
     @Column(nullable = false)
     private String channelUrl;
 
+    @Column
+    private String channelImage;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "video_id")
@@ -72,6 +75,9 @@ public class Project implements Serializable {
 
     @Column(nullable = false)
     private String videoUrl;
+
+    @Column
+    private String videoImage;
 
     @Column
     private String name;
@@ -114,7 +120,7 @@ public class Project implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<ProjectTranslator> translators;
+    private List<Request> requests;
 
     @JsonIgnore
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -154,10 +160,12 @@ public class Project implements Serializable {
         this.channel = channel;
         this.channelId = channel.getId();
         this.channelUrl = channel.getUrl();
+        this.channelImage = channel.getImage();
 
         this.video = video;
         this.videoId = video.getId();
         this.videoUrl = video.getUrl();
+        this.videoImage = video.getImage();
         this.duration = video.getDuration();
 
         this.name = name;
@@ -193,8 +201,8 @@ public class Project implements Serializable {
         if (StringUtils.hasText(description)) {
             this.description = description;
         }
-        if (isCompleted != null) {
-            this.isCompleted = isCompleted;
+        if (isCompleted == true) {
+            this.isCompleted = true;
         }
     }
 

@@ -11,7 +11,6 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import com.ndinhchien.m4y.domain.auth.type.UserDetailsImpl;
-import com.ndinhchien.m4y.global.service.MessageManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

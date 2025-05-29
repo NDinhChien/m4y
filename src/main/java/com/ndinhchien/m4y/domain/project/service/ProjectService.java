@@ -2,6 +2,7 @@ package com.ndinhchien.m4y.domain.project.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,12 +14,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.ndinhchien.m4y.domain.address.entity.Language;
-import com.ndinhchien.m4y.domain.address.service.LanguageService;
+import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.CreateVideoDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.CreateProjectDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.UpdateProjectDto;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicChannel;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProjectWithRequest;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IChannel;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IVideo;
 import com.ndinhchien.m4y.domain.project.entity.Channel;
 import com.ndinhchien.m4y.domain.project.entity.Project;
 import com.ndinhchien.m4y.domain.project.entity.Video;
@@ -26,7 +29,11 @@ import com.ndinhchien.m4y.domain.project.entity.ViewHistory;
 import com.ndinhchien.m4y.domain.project.repository.ChannelRepository;
 import com.ndinhchien.m4y.domain.project.repository.ViewHistoryRepository;
 import com.ndinhchien.m4y.domain.project.type.ProjectSortBy;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.ILanguage;
+import com.ndinhchien.m4y.domain.proposal.entity.Language;
+import com.ndinhchien.m4y.domain.proposal.repository.LanguageRepository;
 import com.ndinhchien.m4y.domain.project.repository.ProjectRepository;
+import com.ndinhchien.m4y.domain.project.repository.VideoRepository;
 import com.ndinhchien.m4y.domain.user.entity.User;
 import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
@@ -43,64 +50,103 @@ public class ProjectService {
 
     private final static int PAGE_SIZE = 12;
 
-    private final VideoService videoService;
+    private final VideoRepository videoRepository;
     private final ProjectRepository projectRepository;
     private final ChannelRepository channelRepository;
     private final ViewHistoryRepository viewHistoryRepository;
-    private final LanguageService languageService;
+    private final LanguageRepository languageRepository;
 
     @Transactional(readOnly = true)
     public Object getProjectById(@Nullable User user, Long projectId) {
-        if (user == null || !isProjectAdmin(user, projectId)) {
-            return projectRepository.findOneById(projectId).orElse(null);
+        if (user != null || isProjectAdmin(projectId, user)) {
+            return projectRepository.findProjectById(projectId).orElse(null);
         }
-        return projectRepository.findProjectById(projectId).orElse(null);
+        return projectRepository.findOneById(projectId).orElse(null);
+    }
+
+    public List<IBasicProject> getProjectsByIds(List<Long> ids) {
+        return projectRepository.findAllByIdIn(ids);
     }
 
     @Transactional(readOnly = true)
-    public List<IBasicProject> getProjectsByChannel(String channelUrl) {
-        Channel channel = validateChannel(channelUrl);
-        return projectRepository.findAllByChannel(channel);
+    public List<IBasicProjectWithRequest> getProjectsByAdmin(User admin) {
+        return projectRepository.findAllByAdmin(admin);
     }
 
-    private boolean isProjectAdmin(User user, Long projectId) {
-        return projectRepository.existsByIdAndAdminId(projectId, user.getId());
+    @Transactional(readOnly = true)
+    public List<IBasicProject> getProjectsByChannelUrl(String channelUrl) {
+        return projectRepository.findAllByChannelUrl(channelUrl);
+    }
+
+    private boolean isProjectAdmin(Long projectId, User user) {
+        return projectRepository.existsByIdAndAdmin(projectId, user);
+    }
+
+    @Transactional(readOnly = true)
+    public Object getChannels() {
+        List<IBasicChannel> channels = channelRepository.findAllBy();
+        List<ILanguage> languages = languageRepository.findAllByIsApproved(true);
+        return Map.of("channels", channels, "languages", languages);
+    }
+
+    @Transactional(readOnly = true)
+    public IChannel getChannelByUrl(String channelUrl) {
+        return channelRepository.findChannelByUrl(channelUrl).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public IVideo getVideoByUrl(String videoUrl) {
+        return videoRepository.findVideoByUrl(videoUrl).orElse(null);
+    }
+
+    @Transactional
+    public Video createVideo(User user, CreateVideoDto requestDto) {
+        String channelUrl = requestDto.getChannelUrl();
+        String channelName = requestDto.getChannelName();
+        String channelDescription = requestDto.getChannelDescription();
+        String channelImage = requestDto.getChannelImage();
+
+        Channel channel = channelRepository.findByUrl(channelUrl).orElse(null);
+        if (channel == null) {
+            channel = channelRepository.save(new Channel(channelUrl, channelName, channelDescription, channelImage));
+        }
+
+        String videoUrl = requestDto.getVideoUrl();
+        String videoName = requestDto.getVideoName();
+        String videoDescription = requestDto.getVideoDescription();
+        String videoImage = requestDto.getVideoImage();
+        Integer videoDuration = requestDto.getVideoDuration();
+
+        String videoLangCode = requestDto.getVideoLangCode();
+        Language videoLanguage = null;
+        if (StringUtils.hasText(videoLangCode)) {
+            videoLanguage = validateLanguageByCode(videoLangCode);
+        }
+
+        Video video = videoRepository.findByUrl(videoUrl).orElse(null);
+        if (video == null) {
+            if (channel == null || videoLanguage == null) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST);
+            }
+            video = videoRepository
+                    .save(new Video(channel, videoUrl, videoName, videoDescription, videoImage, videoDuration,
+                            videoLanguage));
+        }
+        return video;
     }
 
     @Transactional
     public Project createProject(User user, CreateProjectDto requestDto) {
         String channelUrl = requestDto.getChannelUrl();
-        String channelName = requestDto.getChannelName();
-        String channelDescription = requestDto.getChannelDescription();
-
-        Channel channel = channelRepository.findByUrl(channelUrl).orElse(null);
-        if (channel == null) {
-            channel = channelRepository.save(new Channel(channelUrl, channelName, channelDescription));
-        }
+        Channel channel = validateChannel(channelUrl);
 
         String videoUrl = requestDto.getVideoUrl();
-        String videoName = requestDto.getVideoName();
-        String videoDescription = requestDto.getDescription();
-        Integer videoDuration = requestDto.getVideoDuration();
-        String videoLangCode = requestDto.getVideoLangCode();
-        Language videoLanguage = null;
-        if (StringUtils.hasText(videoLangCode)) {
-            videoLanguage = languageService.validateLanguageByCode(videoLangCode);
-        }
-
-        Video video = videoService.findByUrl(videoUrl);
-        if (video == null) {
-            if (channel == null || videoLanguage == null) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST);
-            }
-            video = videoService
-                    .save(new Video(channel, videoUrl, videoName, videoDescription, videoDuration, videoLanguage));
-        }
+        Video video = validateVideo(videoUrl);
 
         String name = requestDto.getName();
         String description = requestDto.getDescription();
         String langCode = requestDto.getLangCode();
-        Language language = languageService.validateLanguageByCode(langCode);
+        Language language = validateLanguageByCode(langCode);
 
         if (projectRepository.existsByVideoUrlAndLangCode(video.getUrl(), language.getCode())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST,
@@ -117,7 +163,7 @@ public class ProjectService {
         String langCode = requestDto.getLangCode();
         Language language = null;
         if (StringUtils.hasText(langCode)) {
-            language = languageService.validateLanguageByCode(langCode);
+            language = validateLanguageByCode(langCode);
         }
 
         Project project = validateProject(projectId);
@@ -148,7 +194,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public Project updateViewCount(User user, Long projectId) {
+    public Integer updateViewCount(User user, Long projectId) {
         Project project = validateProject(projectId);
         ViewHistory view = viewHistoryRepository.findByProjectAndUser(project, user)
                 .orElse(new ViewHistory(user, project));
@@ -156,22 +202,28 @@ public class ProjectService {
         viewHistoryRepository.save(view);
 
         project.updateViewCount(count);
-        return projectRepository.save(project);
+        project = projectRepository.save(project);
+        return project.getViewCount();
 
     }
 
     @Transactional(readOnly = true)
-    public List<IChannel> searchChannels(String name) {
+    public List<IBasicChannel> searchChannels(String name) {
         return channelRepository.findByNameContaining(name);
     }
 
     @Transactional(readOnly = true)
-    public Page<?> searchProjects(String keywords, String langCode, ProjectSortBy sortBy,
+    public Page<?> searchProjects(String keywords, String langCode, ProjectSortBy sortBy, Direction sortOrder,
+            String channelUrl,
             int pageNumber) {
-        Sort sortDetails = Sort.by(Direction.DESC, sortBy.toString());
+        Sort sortDetails = Sort.by(sortOrder, sortBy.toString());
         Pageable pageDetails = PageRequest.of(Math.max(0, pageNumber), PAGE_SIZE, sortDetails);
+        if (StringUtils.hasText(channelUrl) && !channelUrl.toUpperCase().equals("ALL")) {
+            return projectRepository.findAllByChannelUrl(channelUrl, pageDetails);
+        }
+
         Boolean shouldIncludeLangCode = StringUtils.hasText(langCode) && !langCode.toUpperCase().equals("ALL")
-                && languageService.existsByCode(langCode);
+                && languageRepository.existsByCode(langCode);
 
         if (!StringUtils.hasText(keywords)) {
             if (shouldIncludeLangCode) {
@@ -194,9 +246,23 @@ public class ProjectService {
         });
     }
 
+    public Video validateVideo(String videoUrl) {
+        return videoRepository.findByUrl(videoUrl).orElseThrow(() -> {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.VIDEO_NOT_FOUND);
+        });
+    }
+
     public Channel validateChannel(String channelUrl) {
         return channelRepository.findByUrl(channelUrl).orElseThrow(() -> {
             throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.CHANNEL_NOT_FOUND);
+        });
+    }
+
+    public Language validateLanguageByCode(@NotNull String langCode) {
+
+        return languageRepository.findByCode(langCode).orElseThrow(() -> {
+
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.LANGUAGE_NOT_FOUND);
         });
     }
 

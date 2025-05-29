@@ -1,4 +1,4 @@
-package com.ndinhchien.m4y.global.service;
+package com.ndinhchien.m4y.global.websocket;
 
 import java.util.Collection;
 import java.util.Map;
@@ -11,7 +11,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import com.ndinhchien.m4y.domain.user.entity.User;
-import com.ndinhchien.m4y.global.websocket.MessageDestination;
 
 import lombok.extern.slf4j.Slf4j;
 

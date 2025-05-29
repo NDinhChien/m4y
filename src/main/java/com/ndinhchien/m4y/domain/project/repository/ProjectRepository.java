@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProjectWithRequest;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IProject;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IProjectSearch;
-import com.ndinhchien.m4y.domain.project.entity.Channel;
 import com.ndinhchien.m4y.domain.project.entity.Project;
 import com.ndinhchien.m4y.domain.user.entity.User;
 
@@ -21,8 +21,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             SELECT   id,
                      channel_id as channelId,
                      channel_url as channelUrl,
+                     channel_image as channelImage,
                      video_id as videoId,
                      video_url as videoUrl,
+                     video_image as videoImage,
                      name,
                      description,
                      duration,
@@ -46,7 +48,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     long countByVideoUrl(String videoUrl);
 
-    boolean existsByIdAndAdminId(Long id, Long userId);
+    boolean existsByIdAndAdmin(Long id, User admin);
 
     boolean existsByVideoUrlAndLangCode(String videoUrl, String langCode);
 
@@ -64,7 +66,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     Page<IBasicProject> findAllBy(Pageable pageable);
 
-    List<IBasicProject> findAllByChannel(Channel channel);
+    List<IBasicProjectWithRequest> findAllByAdmin(User admin);
+
+    List<IBasicProject> findAllByIdIn(List<Long> ids);
+
+    List<IBasicProject> findAllByChannelUrl(String channelUrl);
+
+    List<IBasicProject> findAllByVideoUrl(String videoUrl);
+
+    Page<IBasicProject> findAllByChannelUrl(String channelUrl, Pageable pageable);
 
     Page<IBasicProject> findAllByLangCode(String langCode, Pageable pageable);
 

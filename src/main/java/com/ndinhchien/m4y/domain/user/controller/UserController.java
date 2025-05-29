@@ -1,5 +1,7 @@
 package com.ndinhchien.m4y.domain.user.controller;
 
+import java.util.List;
+
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ndinhchien.m4y.domain.auth.type.UserDetailsImpl;
-import com.ndinhchien.m4y.domain.project.service.ProjectTranslatorService;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateAddressDto;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateProfileDto;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IPublicUser;
@@ -34,20 +35,26 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
-    private final ProjectTranslatorService translatorService;
 
-    @Operation(summary = "Get your profile")
+    @Operation(summary = "Get profile")
     @GetMapping("/profile")
     public BaseResponse<IUser> getProfile(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return BaseResponse.success("Profile", userService.getProfile(userDetails.getUser()));
     }
 
-    @Operation(summary = "Get public profile")
+    @Operation(summary = "Get user by id")
     @GetMapping("/id/{id}")
     public BaseResponse<IPublicUser> getUser(
             @PathVariable Long id) {
-        return BaseResponse.success("User public profile", userService.getPublicProfile(id));
+        return BaseResponse.success("Users profile", userService.getUserById(id));
+    }
+
+    @Operation(summary = "Get users by ids")
+    @PostMapping("/many")
+    public BaseResponse<List<IPublicUser>> getUsers(
+            @RequestBody List<Long> ids) {
+        return BaseResponse.success("Users profile", userService.getUsersByIds(ids));
     }
 
     @Operation(summary = "Search users")
@@ -91,12 +98,4 @@ public class UserController {
                 userService.toggleFollow(userDetails.getUser(), userId));
     }
 
-    @Operation(summary = "Make translator request")
-    @PostMapping("/translator")
-    public BaseResponse<?> requestTranslator(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam Long projectId) {
-        return BaseResponse.success("Request successfully",
-                translatorService.makeTranslatorRequest(userDetails.getUser(), projectId));
-    }
 }

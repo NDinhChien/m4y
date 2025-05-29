@@ -1,12 +1,12 @@
-package com.ndinhchien.m4y.domain.address.repository;
+package com.ndinhchien.m4y.domain.proposal.repository;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.ILanguageDto;
-import com.ndinhchien.m4y.domain.address.entity.Language;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.ILanguage;
+import com.ndinhchien.m4y.domain.proposal.entity.Language;
 
 public interface LanguageRepository extends JpaRepository<Language, String> {
 
@@ -18,7 +18,7 @@ public interface LanguageRepository extends JpaRepository<Language, String> {
 
     Optional<Language> findByCode(String code);
 
-    List<ILanguageDto> findAllByIsApproved(Boolean isApproved);
+    List<ILanguage> findAllByIsApproved(Boolean isApproved);
 
     long deleteByName(String name);
 

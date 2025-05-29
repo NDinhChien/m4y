@@ -1,7 +1,7 @@
 package com.ndinhchien.m4y.domain.reaction.entity;
 
 import com.ndinhchien.m4y.domain.reaction.type.Emoji;
-import com.ndinhchien.m4y.domain.address.type.AddresssType;
+import com.ndinhchien.m4y.domain.proposal.type.ProposalType;
 import com.ndinhchien.m4y.domain.reaction.type.BaseReaction;
 import com.ndinhchien.m4y.domain.user.entity.User;
 
@@ -28,12 +28,12 @@ public class ProposalReaction extends BaseReaction {
     private Long id;
 
     @Column(nullable = false)
-    private AddresssType proposalType;
+    private ProposalType proposalType;
 
     @Column(nullable = false)
     private String proposalName;
 
-    public ProposalReaction(User user, Emoji emoji, AddresssType proposalType, String proposalName) {
+    public ProposalReaction(User user, Emoji emoji, ProposalType proposalType, String proposalName) {
         super(user, emoji);
         this.proposalType = proposalType;
         this.proposalName = proposalName;

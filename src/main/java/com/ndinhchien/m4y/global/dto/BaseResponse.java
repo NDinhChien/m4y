@@ -1,5 +1,7 @@
 package com.ndinhchien.m4y.global.dto;
 
+import java.time.Instant;
+
 import org.springframework.http.HttpStatus;
 
 import lombok.Getter;
@@ -12,10 +14,13 @@ public class BaseResponse<T> {
 
     private T data;
 
+    private Instant timestamp;
+
     public BaseResponse(int code, String message, T data) {
         this.code = code;
         this.message = message;
         this.data = data;
+        this.timestamp = Instant.now();
     }
 
     public BaseResponse(int code, String message) {

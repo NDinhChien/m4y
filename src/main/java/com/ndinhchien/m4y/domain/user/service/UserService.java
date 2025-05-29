@@ -9,12 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ndinhchien.m4y.domain.address.entity.Country;
-import com.ndinhchien.m4y.domain.address.entity.Deanery;
-import com.ndinhchien.m4y.domain.address.entity.Diocese;
-import com.ndinhchien.m4y.domain.address.entity.Parish;
-import com.ndinhchien.m4y.domain.address.service.AddressService;
-import com.ndinhchien.m4y.domain.project.service.ProjectTranslatorService;
+import com.ndinhchien.m4y.domain.proposal.entity.Country;
+import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
+import com.ndinhchien.m4y.domain.proposal.entity.Diocese;
+import com.ndinhchien.m4y.domain.proposal.entity.Parish;
+import com.ndinhchien.m4y.domain.proposal.service.ProposalService;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateAddressDto;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateProfileDto;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IBasicUser;
@@ -33,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Service
 public class UserService {
-    private final AddressService addressService;
+    private final ProposalService proposalService;
     private final UserRepository userRepository;
     private final SystemFileService systemFileService;
 
@@ -41,9 +40,14 @@ public class UserService {
     public IUser getProfile(User user) {
         return userRepository.findUserById(user.getId()).orElse(null);
     }
-    
+
     @Transactional(readOnly = true)
-    public IPublicUser getPublicProfile(Long userId) {
+    public List<IPublicUser> getUsersByIds(List<Long> ids) {
+        return userRepository.findAllByIdIn(ids);
+    }
+
+    @Transactional(readOnly = true)
+    public IPublicUser getUserById(Long userId) {
         return userRepository.findOneById(userId).orElse(null);
     }
 
@@ -86,16 +90,16 @@ public class UserService {
         Parish parish = user.getParish();
 
         if (StringUtils.hasText(countryName)) {
-            country = addressService.validateCountry(countryName);
+            country = proposalService.validateCountry(countryName);
         }
         if (StringUtils.hasText(dioceseName)) {
-            diocese = addressService.validateDiocese(dioceseName);
+            diocese = proposalService.validateDiocese(dioceseName);
         }
         if (StringUtils.hasText(deaneryName)) {
-            deanery = addressService.validateDeanary(deaneryName);
+            deanery = proposalService.validateDeanary(deaneryName);
         }
         if (StringUtils.hasText(parishName)) {
-            parish = addressService.validateParish(parishName);
+            parish = proposalService.validateParish(parishName);
         }
 
         user.resetAddress();

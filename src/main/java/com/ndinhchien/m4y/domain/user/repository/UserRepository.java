@@ -24,6 +24,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<IPublicUser> findOneById(Long id);
 
+    List<IPublicUser> findAllByIdIn(List<Long> ids);
+
     Optional<User> findBySocialIdAndSocialType(String socialId, SocialType socialType);
 
     List<IBasicUser> findByUserNameContaining(String name);

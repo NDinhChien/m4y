@@ -7,7 +7,7 @@ import com.ndinhchien.m4y.domain.comment.dto.CommentResponseDto.IComment;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProjectReaction;
 
 public class ProjectResponseDto {
-    public static interface IChannel {
+    public static interface IBasicChannel {
 
         Long getId();
 
@@ -15,18 +15,55 @@ public class ProjectResponseDto {
 
         String getUrl();
 
+        String getDescription();
+
+        String getImage();
+
     }
 
-    public static interface IProjectTranslator {
+    public static interface IChannel extends IBasicChannel {
+        List<IBasicVideo> getVideos();
+    }
+
+    public static interface IBasicVideo {
+        Long getId();
+
+        Long getChannelId();
+
+        String getUrl();
+
+        String getName();
+
+        String getDescription();
+
+        String getImage();
+
+        Integer getDuration();
+
+        String getLangCode();
+
+        String getCreatorId();
+
+    }
+
+    public static interface IVideo extends IBasicVideo {
+        IBasicChannel getChannel();
+
+        List<IBasicProject> getProjects();
+    }
+
+    public static interface IRequest {
         Long getId();
 
         Long getUserId();
 
         Long getProjectId();
 
-        Boolean getIsAccepted();
+        Integer getStatus();
 
         Instant getCreatedAt();
+
+        Instant getUpdatedAt();
 
     }
 
@@ -37,9 +74,13 @@ public class ProjectResponseDto {
 
         String getChannelUrl();
 
+        String getChannelImage();
+
         Long getVideoId();
 
         String getVideoUrl();
+
+        String getVideoImage();
 
         String getName();
 
@@ -62,9 +103,13 @@ public class ProjectResponseDto {
         Instant getUpdatedAt();
     }
 
-    public interface IProject extends IBasicProject {
+    public interface IBasicProjectWithRequest extends IBasicProject {
 
-        List<IProjectTranslator> getTranslators();
+        List<IRequest> getRequests();
+
+    }
+
+    public interface IProject extends IBasicProject {
 
         List<IProjectReaction> getReactions();
 

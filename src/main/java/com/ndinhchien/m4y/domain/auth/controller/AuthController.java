@@ -29,6 +29,7 @@ import com.ndinhchien.m4y.global.service.LinkService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -54,14 +55,14 @@ public class AuthController {
 
     @Operation(summary = "Check auth")
     @GetMapping("/check")
-    public BaseResponse<?> check(
-            @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return BaseResponse.success("Auth info: ", userDetails.getUser());
+    public BaseResponse<User> check(
+            @AuthenticationPrincipal @Nullable UserDetailsImpl userDetails) {
+        return BaseResponse.success("Auth info: ", userDetails == null ? null : userDetails.getUser());
     }
 
     @Operation(summary = "Login user")
     @PostMapping("/login")
-    public BaseResponse<?> login(
+    public BaseResponse<JwtResponseDto> login(
             @RequestBody @Valid LoginRequestDto requestDto,
             HttpServletResponse response) {
         return BaseResponse.success("Logged in", authService.login(requestDto, response));
@@ -70,27 +71,27 @@ public class AuthController {
     @Operation(summary = "Logout user")
     @DeleteMapping("/logout")
     public void logout(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @AuthenticationPrincipal @Nullable UserDetailsImpl userDetails,
             HttpServletResponse response) {
-        authService.logout(userDetails != null ? userDetails.getUser() : null, response);
+        authService.logout(userDetails == null ? null : userDetails.getUser(), response);
     }
 
-    @Operation(summary = "Update password")
+    @Operation(summary = "Change password")
     @PutMapping("/password")
-    public BaseResponse<?> updatePassword(
+    public BaseResponse<Boolean> changePassword(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody @Valid UpdatePasswordDto requestDto) {
         return BaseResponse.success("Password updated", authService.updatePassword(userDetails.getUser(), requestDto));
     }
 
-    @Operation(summary = "Request account verification email")
+    @Operation(summary = "Request account's email verification")
     @GetMapping("/request/verify")
     public BaseResponse<?> requestAccountVerification(
             @RequestParam @Email String email) {
         return BaseResponse.success("Please check your email", authService.requestAccountVerification(email));
     }
 
-    @Operation(summary = "Request password reset email")
+    @Operation(summary = "Request account's password reset")
     @GetMapping("/request/reset")
     public BaseResponse<Boolean> requestPasswordReset(
             @RequestParam @Email String email) {
@@ -107,7 +108,7 @@ public class AuthController {
 
     @Operation(summary = "Reset password")
     @PutMapping("/reset")
-    public BaseResponse<?> resetPassword(
+    public BaseResponse<Boolean> resetPassword(
             @RequestBody @Valid ResetPasswordDto requestDto) {
         return BaseResponse.success("Password reset",
                 authService.resetPassword(requestDto.getToken(), requestDto.getPassword()));

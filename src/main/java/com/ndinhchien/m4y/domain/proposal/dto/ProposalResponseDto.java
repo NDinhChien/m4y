@@ -1,8 +1,8 @@
-package com.ndinhchien.m4y.domain.address.dto;
+package com.ndinhchien.m4y.domain.proposal.dto;
 
 import java.time.Instant;
 
-public class AddressResponseDto {
+public class ProposalResponseDto {
     public static interface IProposable {
 
         Long getProposerId();
@@ -14,14 +14,14 @@ public class AddressResponseDto {
         Instant getCreatedAt();
     }
 
-    public static interface ILanguageDto extends IProposable {
+    public static interface ILanguage extends IProposable {
         String getName();
 
         String getCode();
 
     }
 
-    public static interface ICountryDto extends IProposable {
+    public static interface ICountry extends IProposable {
         String getName();
 
         String getCode();
@@ -29,20 +29,20 @@ public class AddressResponseDto {
         String getLanguageName();
     }
 
-    public static interface IDioceseDto extends IProposable {
+    public static interface IDiocese extends IProposable {
 
         String getName();
 
         String getCountryName();
     }
 
-    public static interface IDeaneryDto extends IProposable {
+    public static interface IDeanery extends IProposable {
         String getName();
 
         String getDioceseName();
     }
 
-    public static interface IParishDto extends IProposable {
+    public static interface IParish extends IProposable {
         String getName();
 
         String getDeaneryName();

@@ -1,12 +1,12 @@
-package com.ndinhchien.m4y.domain.address.repository;
+package com.ndinhchien.m4y.domain.proposal.repository;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.ndinhchien.m4y.domain.address.dto.AddressResponseDto.IDeaneryDto;
-import com.ndinhchien.m4y.domain.address.entity.Deanery;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.IDeanery;
+import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
 
 public interface DeaneryRepository extends JpaRepository<Deanery, String> {
 
@@ -14,7 +14,7 @@ public interface DeaneryRepository extends JpaRepository<Deanery, String> {
 
     Optional<Deanery> findByName(String name);
 
-    List<IDeaneryDto> findAllByIsApproved(Boolean isApproved);
+    List<IDeanery> findAllByIsApproved(Boolean isApproved);
 
     long deleteByName(String name);
 

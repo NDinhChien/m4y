@@ -3,6 +3,7 @@ package com.ndinhchien.m4y.domain.project.entity;
 import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ndinhchien.m4y.domain.project.type.RequestStatus;
 import com.ndinhchien.m4y.domain.user.entity.User;
 
 import jakarta.persistence.Column;
@@ -22,10 +23,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @Entity
-@Table(name = "project_translators", indexes = {
-        @Index(name = "project_translators_project_id_idx", columnList = "project_id"),
+@Table(name = "requests", indexes = {
+        @Index(name = "requests_user_id_idx", columnList = "user_id"),
+        @Index(name = "requests_project_id_idx", columnList = "project_id"),
 })
-public class ProjectTranslator {
+public class Request {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,22 +49,28 @@ public class ProjectTranslator {
     private User user;
 
     @Column(nullable = false)
-    private Boolean isAccepted;
+    private Integer status;
 
     @Column(nullable = false)
     private Instant createdAt;
 
+    @Column(nullable = false)
+    private Instant updatedAt;
+
     @PrePersist
     private void prePersist() {
-        if (isAccepted == null) {
-            isAccepted = false;
+        if (status == null) {
+            status = RequestStatus.PENDING.value;
         }
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+        if (updatedAt == null) {
+            updatedAt = Instant.now();
+        }
     }
 
-    public ProjectTranslator(Project project, User user) {
+    public Request(Project project, User user) {
         this.project = project;
         this.projectId = project.getId();
         this.user = user;
@@ -71,7 +79,23 @@ public class ProjectTranslator {
         this.prePersist();
     }
 
-    public void updateIsAccepted() {
-        this.isAccepted = true;
+    public boolean isOwner(User user) {
+        return this.userId.equals(user.getId());
     }
+
+    public boolean isPending() {
+        return this.status.equals(RequestStatus.PENDING.value);
+    }
+
+    public boolean isAccepted() {
+        return this.status.equals(RequestStatus.ACCEPTED.value);
+    }
+
+    public void updateStatus(RequestStatus status) {
+        if (this.status.equals(RequestStatus.PENDING.value)) {
+            this.status = status.value;
+            this.updatedAt = Instant.now();
+        }
+    }
+
 }
