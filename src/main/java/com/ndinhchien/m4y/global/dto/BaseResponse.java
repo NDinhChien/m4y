@@ -1,5 +1,6 @@
 package com.ndinhchien.m4y.global.dto;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
@@ -7,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import lombok.Getter;
 
 @Getter
-public class BaseResponse<T> {
+public class BaseResponse<T> implements Serializable {
     private int code;
 
     private String message;

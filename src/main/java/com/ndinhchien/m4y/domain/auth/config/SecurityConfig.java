@@ -77,7 +77,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/user/id/**", "/api/v1/user/search").permitAll()
                 .requestMatchers("/api/v1/user/**").authenticated()
 
-                .requestMatchers("/api/v1/proposal/all").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/proposal/address").permitAll()
                 .requestMatchers("/api/v1/proposal/sys/**").hasAuthority(UserRole.ADMIN.name())
                 .requestMatchers("/api/v1/proposal/**").authenticated()
 
@@ -94,8 +94,10 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/v1/notification/**").authenticated()
 
-                .requestMatchers("/api/v1/project/id/**", "/api/v1/project/channel/**", "/api/v1/project/search")
+                .requestMatchers("/api/v1/project/language/all", "/api/v1/project/channel/all",
+                        "/api/v1/project/channel/search", "/api/v1/project/search")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/project/video", "/api/v1/project/id/*").permitAll()
                 .requestMatchers("/api/v1/project/**").authenticated()
 
                 .requestMatchers("/api/v1/request/**").authenticated()

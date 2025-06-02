@@ -86,7 +86,7 @@ public class AuthController {
 
     @Operation(summary = "Request account's email verification")
     @GetMapping("/request/verify")
-    public BaseResponse<?> requestAccountVerification(
+    public BaseResponse<Boolean> requestAccountVerification(
             @RequestParam @Email String email) {
         return BaseResponse.success("Please check your email", authService.requestAccountVerification(email));
     }
@@ -111,7 +111,7 @@ public class AuthController {
     public BaseResponse<Boolean> resetPassword(
             @RequestBody @Valid ResetPasswordDto requestDto) {
         return BaseResponse.success("Password reset",
-                authService.resetPassword(requestDto.getToken(), requestDto.getPassword()));
+                authService.resetPassword(requestDto.getToken(), requestDto));
     }
 
     @Operation(summary = "Google login redirect")

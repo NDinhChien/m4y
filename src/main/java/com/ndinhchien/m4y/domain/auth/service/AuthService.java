@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ndinhchien.m4y.domain.auth.dto.AuthRequestDto.LoginRequestDto;
 import com.ndinhchien.m4y.domain.auth.dto.AuthRequestDto.RegisterRequestDto;
+import com.ndinhchien.m4y.domain.auth.dto.AuthRequestDto.ResetPasswordDto;
 import com.ndinhchien.m4y.domain.auth.dto.AuthRequestDto.UpdatePasswordDto;
 import com.ndinhchien.m4y.domain.auth.dto.AuthResponseDto.JwtResponseDto;
 import com.ndinhchien.m4y.domain.auth.strategy.GoogleLoginStrategy;
@@ -131,7 +132,13 @@ public class AuthService {
     }
 
     @Transactional
-    public boolean resetPassword(String token, String newPassword) {
+    public boolean resetPassword(String token, ResetPasswordDto dto) {
+        String newPassword = dto.getPassword();
+        String confirmPassword = dto.getConfirmPassword();
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, ErrorMessage.PASSWORD_MISMATCH);
+        }
+
         User user = jwtService.validateToken(token, "reset");
         user.setPassword(newPassword);
         userRepository.save(user);

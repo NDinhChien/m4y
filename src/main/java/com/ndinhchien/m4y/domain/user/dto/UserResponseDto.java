@@ -2,11 +2,13 @@ package com.ndinhchien.m4y.domain.user.dto;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import com.ndinhchien.m4y.domain.notification.dto.NotificationResponseDto.INotification;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
-import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IRequest;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.ICommentReaction;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IMessageReaction;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProjectReaction;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProposalReaction;
 import com.ndinhchien.m4y.domain.user.type.UserRole;
 
 public class UserResponseDto {
@@ -51,14 +53,44 @@ public class UserResponseDto {
 
         String getEmail();
 
-        Instant getLastUserNameUpdate();
+        Instant getUserNameUpdatedAt();
 
-        Set<Long> getFollowers();
+        List<IFollower> getFollowers();
 
-        Set<Long> getFollowings();
-
-        List<IRequest> getRequests();
+        List<IFollowing> getFollowings();
 
         List<INotification> getNotifications();
+
+        List<IProjectReaction> getProjectReactions();
+
+        List<IProposalReaction> getProposalReactions();
+
+        List<ICommentReaction> getCommentReactions();
+
+        List<IMessageReaction> getMessageReactions();
+    }
+
+    public static interface IFollowing {
+        Long getId();
+
+        Long getUserId();
+
+        Long getTargetId();
+
+        IBasicUser getTarget();
+
+        Instant getCreatedAt();
+    }
+
+    public static interface IFollower {
+        Long getId();
+
+        Long getUserId();
+
+        IBasicUser getUser();
+
+        Long getTargetId();
+
+        Instant getCreatedAt();
     }
 }

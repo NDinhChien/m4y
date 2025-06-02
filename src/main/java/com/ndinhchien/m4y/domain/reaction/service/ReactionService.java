@@ -1,6 +1,7 @@
 package com.ndinhchien.m4y.domain.reaction.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToCommentD
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToMessageDto;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToProjectDto;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionRequestDto.ReactToProposalDto;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IMessageReaction;
+import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProjectReaction;
 import com.ndinhchien.m4y.domain.reaction.dto.ReactionResponseDto.IProposalReaction;
 import com.ndinhchien.m4y.domain.reaction.entity.ProposalReaction;
 import com.ndinhchien.m4y.domain.reaction.entity.CommentReaction;
@@ -79,8 +82,12 @@ public class ReactionService {
     private final MessageManager messageManager;
 
     @Transactional(readOnly = true)
-    public List<IProposalReaction> getProposalReactions(User user) {
-        return proposalReactionRepository.findAllByUser(user);
+    public Object getReactions(User user) {
+        List<IProposalReaction> proposalReactions = proposalReactionRepository.findAllByUser(user);
+        List<IProjectReaction> projectReactions = projectReactionRepository.findAllByUser(user);
+        List<IMessageReaction> messageReactions = messageReactionRepository.findAllByUser(user);
+        return Map.of("proposalReactios", proposalReactions, "projectReactions", projectReactions, "messageReactions",
+                messageReactions);
     }
 
     @Transactional
@@ -117,6 +124,9 @@ public class ReactionService {
         ProjectReaction reaction = projectReactionRepository.findByProjectAndAndUser(project, user).orElse(null);
         int count = 0;
         if (reaction == null) {
+            if (isDeleted == true) {
+                return null;
+            }
             reaction = new ProjectReaction(user, emoji, project);
             count = 1;
         } else {

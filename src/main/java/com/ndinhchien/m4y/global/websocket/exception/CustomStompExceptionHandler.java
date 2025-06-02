@@ -3,6 +3,7 @@ package com.ndinhchien.m4y.global.websocket.exception;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageDeliveryException;
@@ -24,7 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class CustomStompExceptionHandler extends StompSubProtocolErrorHandler {
     private static byte[] EMPTY_PAYLOAD = new byte[0];
-    private static ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public CustomStompExceptionHandler() {
         super();

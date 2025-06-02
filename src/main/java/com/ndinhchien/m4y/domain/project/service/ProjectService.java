@@ -21,6 +21,7 @@ import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicChannel;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProjectWithRequest;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IChannel;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IProject;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IVideo;
 import com.ndinhchien.m4y.domain.project.entity.Channel;
 import com.ndinhchien.m4y.domain.project.entity.Project;
@@ -57,11 +58,8 @@ public class ProjectService {
     private final LanguageRepository languageRepository;
 
     @Transactional(readOnly = true)
-    public Object getProjectById(@Nullable User user, Long projectId) {
-        if (user != null || isProjectAdmin(projectId, user)) {
-            return projectRepository.findProjectById(projectId).orElse(null);
-        }
-        return projectRepository.findOneById(projectId).orElse(null);
+    public IProject getProjectById(Long projectId) {
+        return projectRepository.findProjectById(projectId).orElse(null);
     }
 
     public List<IBasicProject> getProjectsByIds(List<Long> ids) {
@@ -83,10 +81,13 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Object getChannels() {
-        List<IBasicChannel> channels = channelRepository.findAllBy();
-        List<ILanguage> languages = languageRepository.findAllByIsApproved(true);
-        return Map.of("channels", channels, "languages", languages);
+    public List<IBasicChannel> getChannels() {
+        return channelRepository.findAllBy();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ILanguage> getLanguages() {
+        return languageRepository.findAllByIsApproved(true);
     }
 
     @Transactional(readOnly = true)
@@ -95,7 +96,10 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public IVideo getVideoByUrl(String videoUrl) {
+    public Object getVideoByUrl(String videoUrl, Boolean includeSubtitles) {
+        if (includeSubtitles == true) {
+            return videoRepository.findOneByUrl(videoUrl).orElse(null);
+        }
         return videoRepository.findVideoByUrl(videoUrl).orElse(null);
     }
 
@@ -181,6 +185,16 @@ public class ProjectService {
     }
 
     @Transactional
+    public Project hardDeleteProject(User user, Long projectId) {
+        Project project = validateProject(projectId);
+        if (user.isSysAdmin() || project.isAdmin(user)) {
+            projectRepository.delete(project);
+            return project;
+        }
+        return null;
+    }
+
+    @Transactional
     public List<Project> hardDeleteProjects(User user, List<Long> ids) {
         List<Project> deleted = new ArrayList<>();
         List<Project> projects = projectRepository.findAllById(ids);
@@ -214,29 +228,33 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public Page<?> searchProjects(String keywords, String langCode, ProjectSortBy sortBy, Direction sortOrder,
-            String channelUrl,
-            int pageNumber) {
+            String channelUrl, int pageNumber) {
         Sort sortDetails = Sort.by(sortOrder, sortBy.toString());
         Pageable pageDetails = PageRequest.of(Math.max(0, pageNumber), PAGE_SIZE, sortDetails);
-        if (StringUtils.hasText(channelUrl) && !channelUrl.toUpperCase().equals("ALL")) {
-            return projectRepository.findAllByChannelUrl(channelUrl, pageDetails);
-        }
-
         Boolean shouldIncludeLangCode = StringUtils.hasText(langCode) && !langCode.toUpperCase().equals("ALL")
                 && languageRepository.existsByCode(langCode);
 
-        if (!StringUtils.hasText(keywords)) {
+        if (StringUtils.hasText(keywords)) {
+            if (shouldIncludeLangCode) {
+                return projectRepository.search(keywords, langCode, pageDetails);
+            }
+            return projectRepository.search(keywords, pageDetails);
+        }
+
+        if (sortBy.equals(ProjectSortBy.relevance)) {
+            sortDetails = Sort.by(sortOrder, ProjectSortBy.viewCount.toString());
+            pageDetails = PageRequest.of(Math.max(0, pageNumber), PAGE_SIZE, sortDetails);
+        }
+
+        if (StringUtils.hasText(channelUrl) && !channelUrl.toUpperCase().equals("ALL")) {
+            return projectRepository.findAllByChannelUrl(channelUrl, pageDetails);
+        } else {
+
             if (shouldIncludeLangCode) {
                 return projectRepository.findAllByLangCode(langCode,
                         pageDetails);
             }
             return projectRepository.findAllBy(pageDetails);
-        } else {
-            if (shouldIncludeLangCode) {
-                return projectRepository.search(keywords, langCode, pageDetails);
-            }
-
-            return projectRepository.search(keywords, pageDetails);
         }
     }
 

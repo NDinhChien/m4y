@@ -19,7 +19,9 @@ import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateProfileDto;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IBasicUser;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IPublicUser;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IUser;
+import com.ndinhchien.m4y.domain.user.entity.Follower;
 import com.ndinhchien.m4y.domain.user.entity.User;
+import com.ndinhchien.m4y.domain.user.repository.FollowerRepository;
 import com.ndinhchien.m4y.domain.user.repository.UserRepository;
 import com.ndinhchien.m4y.global.exception.BusinessException;
 import com.ndinhchien.m4y.global.exception.ErrorMessage;
@@ -32,8 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Service
 public class UserService {
-    private final ProposalService proposalService;
     private final UserRepository userRepository;
+    private final FollowerRepository followerRepository;
+    private final ProposalService proposalService;
     private final SystemFileService systemFileService;
 
     @Transactional(readOnly = true)
@@ -122,15 +125,20 @@ public class UserService {
     }
 
     @Transactional
-    public int toggleFollow(User user, Long translatorId) {
-        if (user.getId().equals(translatorId)) {
+    public int toggleFollow(User user, Long targetId) {
+        if (user.getId().equals(targetId)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Can't (un)follow yourself");
         }
-        User translator = validateUser(translatorId);
-        int result = user.toggleFollow(translator);
-        userRepository.save(translator);
-        userRepository.save(user);
-        return result;
+        User target = validateUser(targetId);
+        Follower follower = followerRepository.findByUserAndTarget(user, target).orElse(null);
+        if (follower != null) {
+            // you are following this target user
+            follower = new Follower(user, target);
+            follower = followerRepository.save(follower);
+            return 1;
+        }
+        followerRepository.delete(follower);
+        return -1;
     }
 
     private User validateUser(Long userId) {

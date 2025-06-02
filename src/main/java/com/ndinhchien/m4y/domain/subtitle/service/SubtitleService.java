@@ -41,7 +41,7 @@ public class SubtitleService {
     }
 
     @Transactional
-    public List<Subtitle> creatorAddSubtitles(User user, String videoUrl, List<AddSubtitleDto> requestDto) {
+    public List<Subtitle> addSubtitles(User user, String videoUrl, List<AddSubtitleDto> requestDto) {
         Video video = videoService.validate(videoUrl);
         if (!video.isCreator(user)) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "You are not the creator of this project's subtitles.");
@@ -65,7 +65,7 @@ public class SubtitleService {
     }
 
     @Transactional
-    public List<Subtitle> creatorUpdateSubtitles(User user, String videoUrl, List<UpdateSubtitleDto> requestDto) {
+    public List<Subtitle> updateSubtitles(User user, String videoUrl, List<UpdateSubtitleDto> requestDto) {
         Video video = videoService.validate(videoUrl);
         if (!video.isCreator(user)) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "You are not the creator of this project's subtitles.");
@@ -87,7 +87,7 @@ public class SubtitleService {
     }
 
     @Transactional
-    public List<Subtitle> creatorHardDeleteSubtitles(User user, List<Long> ids) {
+    public List<Subtitle> hardDeleteSubtitles(User user, List<Long> ids) {
         List<Subtitle> deleted = new ArrayList<>();
         List<Subtitle> subtitles = subtitleRepository.findAllById(ids);
         for (Subtitle subtitle : subtitles) {
@@ -100,7 +100,7 @@ public class SubtitleService {
     }
 
     @Transactional
-    public List<Subtitle> updateDesTexts(User user, String videoUrl, String langCode,
+    public List<Subtitle> updateTranslations(User user, String videoUrl, String langCode,
             List<UpdateDesTextDto> requestDto) {
         Project project = projectRepository.findByVideoUrlAndLangCode(videoUrl, langCode)
                 .orElseThrow(() -> {

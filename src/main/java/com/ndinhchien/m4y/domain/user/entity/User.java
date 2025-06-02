@@ -23,6 +23,9 @@ import com.ndinhchien.m4y.domain.proposal.entity.Country;
 import com.ndinhchien.m4y.domain.proposal.entity.Deanery;
 import com.ndinhchien.m4y.domain.proposal.entity.Diocese;
 import com.ndinhchien.m4y.domain.proposal.entity.Parish;
+import com.ndinhchien.m4y.domain.reaction.entity.CommentReaction;
+import com.ndinhchien.m4y.domain.reaction.entity.MessageReaction;
+import com.ndinhchien.m4y.domain.reaction.entity.ProjectReaction;
 import com.ndinhchien.m4y.domain.reaction.entity.ProposalReaction;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateProfileDto;
 import com.ndinhchien.m4y.domain.user.type.UserRole;
@@ -97,7 +100,7 @@ public class User implements Serializable {
     @Column
     private Instant birthday;
 
-    @Column
+    @Column(length = 2048)
     private String bio;
 
     @Column(name = "country_name", insertable = false, updatable = false)
@@ -138,20 +141,20 @@ public class User implements Serializable {
     @Column(nullable = false)
     private Instant joinedAt;
 
-    @Column(nullable = false)
-    private Instant lastUserNameUpdate;
+    @Column
+    private Instant userNameUpdatedAt;
 
     @JsonIgnore
     @Column(nullable = false)
     private String tokenSecret;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Set<Long> followers;
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Follower> followings;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Set<Long> followings;
+    @JsonIgnore
+    @OneToMany(mappedBy = "target", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Follower> followers;
 
     @JsonIgnore
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -169,6 +172,18 @@ public class User implements Serializable {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ProposalReaction> proposalReactions;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ProjectReaction> projectReactions;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<CommentReaction> commentReactions;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<MessageReaction> messageReactions;
+
     @PrePersist
     private void prePersist() {
         if (role == null) {
@@ -180,20 +195,11 @@ public class User implements Serializable {
         if (joinedAt == null) {
             joinedAt = Instant.now();
         }
-        if (lastUserNameUpdate == null) {
-            lastUserNameUpdate = Instant.now();
-        }
         if (isVerified == null) {
             isVerified = false;
         }
         if (isBanned == null) {
             isBanned = false;
-        }
-        if (followers == null) {
-            followers = new HashSet<>();
-        }
-        if (followings == null) {
-            followings = new HashSet<>();
         }
     }
 
@@ -228,15 +234,16 @@ public class User implements Serializable {
     }
 
     public boolean canUpdateUserName() {
-        return lastUserNameUpdate.isBefore(Instant.now().minus(7, ChronoUnit.DAYS));
+        if (userNameUpdatedAt == null)
+            return true;
+        return userNameUpdatedAt.plus(7, ChronoUnit.DAYS).isBefore(Instant.now());
     }
 
     public void updateUserName(String userName) {
-        if (!canUpdateUserName()) {
-            return;
+        if (canUpdateUserName()) {
+            this.userName = userName;
+            this.userNameUpdatedAt = Instant.now();
         }
-        this.userName = userName;
-        this.lastUserNameUpdate = Instant.now();
     }
 
     public void updateProfile(UpdateProfileDto dto) {
@@ -300,17 +307,6 @@ public class User implements Serializable {
             this.socialId = socialId;
             this.socialType = socialType;
         }
-    }
-
-    public int toggleFollow(User translator) {
-        if (this.followings.contains(translator.getId())) {
-            this.followings.remove(translator.getId());
-            translator.getFollowers().remove(this.id);
-            return -1;
-        }
-        this.followings.add(translator.getId());
-        translator.getFollowers().add(this.id);
-        return 1;
     }
 
 }

@@ -3,6 +3,7 @@ package com.ndinhchien.m4y.domain.reaction.dto;
 import com.ndinhchien.m4y.domain.proposal.type.ProposalType;
 
 public class ReactionResponseDto {
+
     public static interface IBaseReaction {
         Long getUserId();
 
@@ -34,5 +35,11 @@ public class ReactionResponseDto {
 
         Long getMessageId();
 
+    }
+
+    public static interface ICommentReaction extends IBaseReaction {
+        Long getCommentId();
+
+        Boolean getIsReply();
     }
 }

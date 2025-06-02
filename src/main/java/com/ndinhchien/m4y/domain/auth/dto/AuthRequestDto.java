@@ -74,6 +74,8 @@ public class AuthRequestDto {
         @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*])[A-Za-z\\d!@#$%^&*]{6,}$", message = "Password must be at least 6 characters long and include uppercase, lowercase, number, and special character (!@#$%^&*)")
         private String password;
 
+        @NotBlank
+        private String confirmPassword;
     }
 
 }

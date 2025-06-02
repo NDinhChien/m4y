@@ -21,19 +21,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "react", description = "Reaction Related APIs")
+@Tag(name = "react", description = "React Related APIs")
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/react")
 @RestController
 public class ReactionController {
      private final ReactionService reactionService;
 
-     @Operation(summary = "Get proposal reactions")
-     @GetMapping("/proposal")
-     public BaseResponse<?> getProposalReactions(
+     @Operation(summary = "Get reactions")
+     @GetMapping("/all")
+     public BaseResponse<?> getReactions(
                @AuthenticationPrincipal UserDetailsImpl userDetails) {
-          return BaseResponse.success("Proposal reactions",
-                    reactionService.getProposalReactions(userDetails.getUser()));
+          return BaseResponse.success("User reactions",
+                    reactionService.getReactions(userDetails.getUser()));
      }
 
      @Operation(summary = "React to proposal")

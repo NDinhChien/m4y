@@ -29,10 +29,10 @@ public class ProposalController {
 
     private final ProposalService proposalService;
 
-    @Operation(summary = "All addresses")
+    @Operation(summary = "All address proposals")
     @GetMapping("/address")
     public BaseResponse<?> getData() {
-        return BaseResponse.success("All addresses",
+        return BaseResponse.success("All address proposals",
                 proposalService.getAddressProposals());
     }
 

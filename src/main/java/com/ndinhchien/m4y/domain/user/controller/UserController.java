@@ -20,6 +20,7 @@ import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateAddressDto;
 import com.ndinhchien.m4y.domain.user.dto.UserRequestDto.UpdateProfileDto;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IPublicUser;
 import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IUser;
+import com.ndinhchien.m4y.domain.user.entity.User;
 import com.ndinhchien.m4y.domain.user.service.UserService;
 import com.ndinhchien.m4y.global.dto.BaseResponse;
 
@@ -50,13 +51,6 @@ public class UserController {
         return BaseResponse.success("Users profile", userService.getUserById(id));
     }
 
-    @Operation(summary = "Get users by ids")
-    @PostMapping("/many")
-    public BaseResponse<List<IPublicUser>> getUsers(
-            @RequestBody List<Long> ids) {
-        return BaseResponse.success("Users profile", userService.getUsersByIds(ids));
-    }
-
     @Operation(summary = "Search users")
     @GetMapping("/search")
     public BaseResponse<?> searchUsers(
@@ -74,7 +68,7 @@ public class UserController {
 
     @Operation(summary = "Update address")
     @PutMapping("/address")
-    public BaseResponse<?> updateAddress(
+    public BaseResponse<User> updateAddress(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody @Valid UpdateAddressDto requestDto) {
         return BaseResponse.success("Address updated", userService.updateAddress(userDetails.getUser(), requestDto));
@@ -82,7 +76,7 @@ public class UserController {
 
     @Operation(summary = "Update avatar")
     @PutMapping(path = "/avatar", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public BaseResponse<?> updateAvatar(
+    public BaseResponse<User> updateAvatar(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestPart(name = "avatar", required = true) MultipartFile avatar) {
         return BaseResponse.success("Update avatar successfully.",

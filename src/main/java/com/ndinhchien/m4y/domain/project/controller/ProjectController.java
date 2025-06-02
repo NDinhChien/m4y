@@ -21,14 +21,13 @@ import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.CreateProjectDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.CreateVideoDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectRequestDto.UpdateProjectDto;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicChannel;
-import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProject;
 import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IBasicProjectWithRequest;
-import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IVideo;
+import com.ndinhchien.m4y.domain.project.dto.ProjectResponseDto.IProject;
 import com.ndinhchien.m4y.domain.project.entity.Project;
 import com.ndinhchien.m4y.domain.project.entity.Video;
 import com.ndinhchien.m4y.domain.project.service.ProjectService;
 import com.ndinhchien.m4y.domain.project.type.ProjectSortBy;
-import com.ndinhchien.m4y.domain.user.dto.UserResponseDto.IPublicUser;
+import com.ndinhchien.m4y.domain.proposal.dto.ProposalResponseDto.ILanguage;
 import com.ndinhchien.m4y.global.dto.BaseResponse;
 import com.ndinhchien.m4y.global.dto.PageDto;
 
@@ -46,17 +45,24 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    @Operation(summary = "Get languages")
+    @GetMapping("/language/all")
+    public BaseResponse<List<ILanguage>> getLanguages() {
+        return BaseResponse.success("Languages", projectService.getLanguages());
+    }
+
     @Operation(summary = "Get channels")
     @GetMapping("/channel/all")
-    public BaseResponse<?> getChannels() {
+    public BaseResponse<List<IBasicChannel>> getChannels() {
         return BaseResponse.success("Channels", projectService.getChannels());
     }
 
     @Operation(summary = "Get video by url")
     @GetMapping("/video")
-    public BaseResponse<IVideo> getVideoByUrl(
-            @RequestParam String videoUrl) {
-        return BaseResponse.success("Video", projectService.getVideoByUrl(videoUrl));
+    public BaseResponse<?> getVideoByUrl(
+            @RequestParam String url,
+            @RequestParam(required = false) Boolean includeSubtitles) {
+        return BaseResponse.success("Video", projectService.getVideoByUrl(url, includeSubtitles));
     }
 
     @Operation(summary = "Create video")
@@ -70,18 +76,9 @@ public class ProjectController {
 
     @Operation(summary = "Get project by id")
     @GetMapping("/id/{id}")
-    public BaseResponse<?> getProject(
-            @AuthenticationPrincipal @Nullable UserDetailsImpl userDetails,
-            @PathVariable Long id) {
+    public BaseResponse<IProject> getProject(@PathVariable Long id) {
         return BaseResponse.success("Project",
-                projectService.getProjectById(userDetails == null ? null : userDetails.getUser(), id));
-    }
-
-    @Operation(summary = "Get projects")
-    @GetMapping("/many")
-    @Transactional(readOnly = true)
-    public List<IBasicProject> getProjectsByIds(List<Long> ids) {
-        return projectService.getProjectsByIds(ids);
+                projectService.getProjectById(id));
     }
 
     @Operation(summary = "Get user's projects")
@@ -101,7 +98,7 @@ public class ProjectController {
     }
 
     @Operation(summary = "Update view count")
-    @PutMapping("/viewCount")
+    @PutMapping("/view")
     public BaseResponse<Integer> updateViewCount(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam Long projectId) {
@@ -117,13 +114,13 @@ public class ProjectController {
                 projectService.updateProject(userDetails.getUser(), requestDto));
     }
 
-    @Operation(summary = "Hard delete projects")
-    @DeleteMapping
-    public BaseResponse<?> hardDeleteProject(
+    @Operation(summary = "Hard delete project")
+    @DeleteMapping("/id/{id}")
+    public BaseResponse<Project> hardDeleteProject(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody List<Long> ids) {
+            @RequestBody Long id) {
         return BaseResponse.success("Projects deleted",
-                projectService.hardDeleteProjects(userDetails.getUser(), ids));
+                projectService.hardDeleteProject(userDetails.getUser(), id));
     }
 
     @Operation(summary = "Search channels")
